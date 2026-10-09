@@ -237,7 +237,10 @@
   .al-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px 18px; }
   .al-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--dim); }
   .al-row b { color: var(--text); font-weight: 500; min-width: 84px; }
-  .al-time { font-size: 30px !important; height: 52px !important; width: 150px; font-weight: 600; text-align: center; }
+  .al-time { font-size: 28px !important; height: 60px !important; width: 100%; max-width: 280px; padding: 0 14px !important; font-weight: 600;
+    text-align: center; color-scheme: dark; background: #0b1113 !important; color: var(--text) !important; border-radius: 12px !important; }
+  .al-time::-webkit-date-and-time-value { text-align: center; }
+  .alarm h3 { flex-wrap: wrap; } .alarm h3 .muted { flex-basis: 100%; }
   .days { display: flex; gap: 4px; }
   .days button { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: #ffffff08; color: var(--dim); cursor: pointer; font-size: 13px; }
   .days button.on { background: #fbbf7733; border-color: #fbbf7799; color: #fde2bd; }
