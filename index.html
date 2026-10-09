@@ -5,11 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Yoga Flow Player</title>
 <!-- 링크 미리보기 (카카오톡·문자·SNS). 주소가 생기면 og:image·og:url 을 https://주소/... 전체 주소로 바꾸세요 -->
-<meta name="description" content="요가 수업 중 음악을 끊김 없이 전환하는 플레이어 — 싱잉볼, 사바아사나 타이머, 배경 소리 17종 믹스. 설치 없이 브라우저에서 바로.">
+<meta name="description" content="요가 수업 중 음악을 끊김 없이 전환하는 플레이어 — 싱잉볼, 사바아사나 타이머, 배경 소리 27종 믹스. 설치 없이 브라우저에서 바로.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Yoga Flow Player">
 <meta property="og:title" content="Yoga Flow Player — 요가 수업 음악 전환 플레이어">
-<meta property="og:description" content="끊김 없는 곡 전환 · 싱잉볼 · 사바아사나 타이머 · 배경 소리 17종. 설치 없이 바로, 휴대폰 홈 화면 앱으로도.">
+<meta property="og:description" content="끊김 없는 곡 전환 · 싱잉볼 · 사바아사나 타이머 · 배경 소리 27종. 설치 없이 바로, 휴대폰 홈 화면 앱으로도.">
 <meta property="og:image" content="og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -877,6 +877,27 @@ const FILL = {
       t[i] = v + hp * o.hiss * fl;
     }
   },
+  pink(t) {                                                   // 분홍 소음 (Paul Kellet 필터)
+    let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+    for (let i = 0; i < t.length; i++) {
+      const w = white();
+      b0 = 0.99886 * b0 + w * 0.0555179; b1 = 0.99332 * b1 + w * 0.0750759; b2 = 0.96900 * b2 + w * 0.1538520;
+      b3 = 0.86650 * b3 + w * 0.3104856; b4 = 0.55000 * b4 + w * 0.5329522; b5 = -0.7616 * b5 - w * 0.0168980;
+      t[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * 0.5362) * 0.11; b6 = w * 0.115926;
+    }
+  },
+  brown(t) { let l = 0; for (let i = 0; i < t.length; i++) { l = (l + 0.02 * white()) / 1.02; t[i] = l * 3.5; } },
+  leafrain(t, sr) {                                           // 숲속 비: 잎에 톡톡 + 잎에서 굵게 떨어지는 물 + 옅은 빗소리
+    let lp = 0, lp2 = 0, env = 0, f1 = 0, ph = 0, big = 0, bf = 0, bph = 0;
+    for (let i = 0; i < t.length; i++) {
+      const w = white(); lp += (w - lp) * 0.3; lp2 += (lp - lp2) * 0.05;
+      if (Math.random() < 60 / sr) { env = rnd(0.05, 0.25); f1 = rnd(1500, 4200); }          // 잎에 맞는 작은 빗방울
+      env *= 0.985; ph += 2 * Math.PI * f1 / sr;
+      if (big < 0.001 && Math.random() < 0.8 / sr) { big = rnd(0.15, 0.35); bf = rnd(260, 520); }   // 잎 끝에서 떨어지는 굵은 물방울
+      big *= 0.9993; bf *= 1.00004; bph += 2 * Math.PI * bf / sr;
+      t[i] = (lp - lp2) * 0.22 + Math.sin(ph) * env * 0.5 + w * env * 0.25 + Math.sin(bph) * big;
+    }
+  },
   tent(t, sr) {                                               // 텐트 천에 떨어지는 빗방울: 낮게 '톡' 울리는 천 + 멀리 빗소리
     const modes = [[150, .9986], [230, .9982], [320, .9978], [470, .997]].map(([f, r]) => ({ r, c: 2 * r * Math.cos(2 * Math.PI * f / sr), s: Math.sin(2 * Math.PI * f / sr), y1: 0, y2: 0 }));
     let lp = 0, lp2 = 0, drip = 0;
@@ -954,7 +975,7 @@ function toneLayer(base, mix) {                           // 432Hz·528Hz 명상
     return () => { [lfo, ...os].forEach(o => { try { o.stop(); } catch (e) {} }); };
   };
 }
-const BROOK = [];
+const BROOK = []; let FALLS = null;
 const EMILLE = [[1, 1, 45], [2.63, .8, 32], [3.25, .3, 22], [4.15, .35, 18], [5.54, .2, 12], [7.35, .14, 9], [9.0, .1, 7]];   // 성덕대왕신종 배음 비 (근사)
 const SOUNDS = [
   { id: "rain",    icon: "🌧", name: "빗소리",        desc: "창밖에 내리는 비",           vol: .55, rev: 0,   make: loopLayer("rain", 12, 7000) },
@@ -1023,6 +1044,154 @@ const SOUNDS = [
     }, [0.2, 0.6]) },
   { id: "bowls",   icon: "🥣", name: "싱잉볼 명상",   desc: "가끔 울리는 싱잉볼",          vol: .4,  rev: .3,
     make: out => every(14, 24, () => strike(out, pick([174, 196, 220, 261]), BELLS.bowl.parts, rnd(1.2, 2.2), 0.4), [0.3, 1]) },
+  { id: "thunder", icon: "⛈", name: "먼 천둥 + 비",   desc: "1~2분마다 멀리서 우르릉",       vol: .5,  rev: 0,
+    make: out => {
+      const stopRain = loopLayer("rain", 12, 6000)(out);
+      const lrev = ctx.createConvolver(); lrev.buffer = rev.buffer; lrev.connect(out);
+      const roll = every(50, 110, () => {
+        const sr = ctx.sampleRate, len = Math.floor(sr * rnd(5, 9)), b = ctx.createBuffer(2, len, sr);
+        for (let c = 0; c < 2; c++) {
+          const d = b.getChannelData(c); let l = 0, m = 0, mt = 0;
+          for (let i = 0; i < len; i++) {
+            l = (l + 0.02 * white()) / 1.02;
+            if (--mt <= 0) { mt = sr * rnd(0.15, 0.6); m = rnd(0.3, 1); }              // 우르르 굴러가는 덩어리
+            const x = i / len, env = Math.min(1, x * 12) * Math.pow(1 - x, 1.6);
+            d[i] = l * 6 * env * (0.4 + 0.6 * m);
+          }
+        }
+        const src = ctx.createBufferSource(); src.buffer = b;
+        const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = rnd(110, 220);
+        const g = ctx.createGain(); g.gain.value = rnd(0.6, 1.1);
+        const wg = ctx.createGain(); wg.gain.value = 0.6;
+        src.connect(lp); lp.connect(g); g.connect(out); g.connect(wg); wg.connect(lrev); src.start();
+      }, [6, 20]);
+      return () => { stopRain(); roll(); };
+    } },
+  { id: "waterfall", icon: "🏞", name: "계곡 폭포",    desc: "웅장하게 떨어지는 물 (멀리·가까이)", vol: .45, rev: 0,
+    make: out => {
+      const lrev = ctx.createConvolver(); lrev.buffer = rev.buffer; lrev.connect(out);
+      const stops = [];
+      [[makeLoop(9, FILL.pink), 5200, 0.9, -0.3, 0.15], [makeLoop(11, FILL.brown), 900, 0.8, 0.35, 0.6],
+       [FALLS || (FALLS = makeLoop(8, (t, sr, c) => FILL.brook(t, sr, c, { rate: 700, fmin: 500, fmax: 3200, amp: .06, hiss: .2 }))), 3800, 0.7, 0, 0.3]
+      ].forEach(([buf, hz, g, pan, wet]) => {
+        const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+        const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 80;
+        const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = hz;
+        const gg = ctx.createGain(); gg.gain.value = g; const pn = ctx.createStereoPanner(); pn.pan.value = pan;
+        const wg = ctx.createGain(); wg.gain.value = wet;
+        src.connect(hp); hp.connect(lp); lp.connect(gg); gg.connect(pn); pn.connect(out); pn.connect(wg); wg.connect(lrev); src.start();
+        stops.push(() => { try { src.stop(); } catch (e) {} });
+      });
+      return () => stops.forEach(f => f());
+    } },
+  { id: "pink",    icon: "🌫", name: "분홍 소음",       desc: "수면·집중용 부드러운 잡음",     vol: .4,  rev: 0,   make: loopLayer("pink", 10, 12000) },
+  { id: "brownn",  icon: "🟤", name: "갈색 소음",       desc: "더 낮고 깊은 수면용 잡음",       vol: .45, rev: 0,   make: loopLayer("brown", 10, 1200) },
+  { id: "moktak",  icon: "🪵", name: "목탁",            desc: "산사의 새벽 목탁 소리",          vol: .4,  rev: .45,
+    make: out => {
+      const knock = (when, a) => {                         // 나무 '똑' : 몸통 울림 + 짧은 딸깍
+        const t0 = ctx.currentTime + when;
+        [[rnd(690, 720), 1, 0.16], [rnd(1580, 1640), 0.35, 0.06], [rnd(2600, 2700), 0.12, 0.03]].forEach(([f, k, dec]) => {
+          const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.value = f;
+          g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(a * k * 0.5, t0 + 0.002); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dec);
+          o.connect(g); g.connect(out); o.start(t0); o.stop(t0 + dec + 0.05);
+        });
+      };
+      return every(9, 18, () => {
+        let t = 0;
+        if (Math.random() < 0.3) {                            // 목탁 굴리기: 점점 빨라졌다 느려짐
+          let gap = 0.7; for (let k = 0; k < 18; k++) { knock(t, 0.55 + 0.3 * Math.sin(k / 18 * Math.PI)); t += gap; gap = k < 12 ? Math.max(0.12, gap * 0.82) : gap * 1.5; }
+        } else { const n = 6 + Math.floor(Math.random() * 8); for (let k = 0; k < n; k++) { knock(t, rnd(0.6, 0.8)); t += rnd(0.78, 0.86); } }
+      }, [0.5, 1.5]);
+    } },
+  { id: "owl",     icon: "🦉", name: "소쩍새",          desc: "여름밤 '소쩍, 소쩍' 우는 새",    vol: .35, rev: .55,
+    make: out => {
+      const call = (at, f, pan) => {                       // '소-쩍': 짧게 오르는 음 + 조금 높은 음
+        blip(out, { f: f * 0.96, f2: f, dur: 0.14, a: 0.22, at, pan });
+        blip(out, { f: f * 1.08, f2: f * 1.04, dur: 0.2, a: 0.26, at: at + 0.24, pan });
+      };
+      const birds = [{ f: rnd(1150, 1250), pan: -0.5 }, { f: rnd(1000, 1100), pan: 0.6 }];
+      return every(14, 34, () => {
+        const b = pick(birds), n = 5 + Math.floor(Math.random() * 8), gap = rnd(1.9, 2.4);
+        for (let k = 0; k < n; k++) call(k * gap, b.f, b.pan);
+      }, [1, 4]);
+    } },
+  { id: "bamboo",  icon: "🎋", name: "대나무 숲",       desc: "바람에 사각이고 '딱딱' 부딪힘",  vol: .4,  rev: .3,
+    make: out => {
+      const src = ctx.createBufferSource(); src.buffer = makeLoop(12, FILL.wind); src.loop = true;
+      const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 2400; bp.Q.value = 0.6;   // 잎 사각사각
+      const lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.frequency.value = 0.09; lg.gain.value = 900; lfo.connect(lg); lg.connect(bp.frequency); lfo.start();
+      const g = ctx.createGain(); g.gain.value = 1.4; src.connect(bp); bp.connect(g); g.connect(out); src.start();
+      const knocks = every(1.5, 7, () => {                // 속 빈 대나무끼리 '딱 딱딱'
+        const n = 1 + Math.floor(Math.random() * 4), pan = rnd(-0.8, 0.8); let at = 0;
+        for (let k = 0; k < n; k++) {
+          const f = rnd(320, 520);
+          blip(out, { f, f2: f * 0.97, dur: 0.12, a: 0.22, at, pan }); blip(out, { f: f * 2.71, dur: 0.05, a: 0.08, at, pan });
+          at += rnd(0.08, 0.3);
+        }
+      });
+      return () => { try { src.stop(); lfo.stop(); } catch (e) {} knocks(); };
+    } },
+  { id: "leafrain", icon: "🍂", name: "숲속 비",       desc: "나뭇잎에 떨어지는 비",          vol: .45, rev: .2,  make: loopLayer("leafrain", 12, 9000) },
+  { id: "whale",   icon: "🐋", name: "고래 노래",       desc: "깊은 바다의 느린 울음",          vol: .4,  rev: 0,
+    make: out => {
+      const deep = ctx.createConvolver();                  // 바닷속 긴 울림
+      deep.buffer = (() => { const len = ctx.sampleRate * 7, b = ctx.createBuffer(2, len, ctx.sampleRate);
+        for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); for (let i = 0; i < len; i++) d[i] = white() * Math.pow(1 - i / len, 2.2); } return b; })();
+      const wet = ctx.createGain(); wet.gain.value = 0.5; deep.connect(wet); wet.connect(out);
+      const bed = ctx.createBufferSource(); bed.buffer = makeLoop(10, FILL.brown); bed.loop = true;
+      const blp = ctx.createBiquadFilter(); blp.type = "lowpass"; blp.frequency.value = 180;
+      const bg = ctx.createGain(); bg.gain.value = 0.5; bed.connect(blp); blp.connect(bg); bg.connect(out); bed.start();
+      const song = every(9, 22, () => {
+        const t0 = ctx.currentTime + 0.05, dur = rnd(2.5, 6), f0 = rnd(140, 220), f1 = f0 * rnd(1.4, 2.2), f2 = f0 * rnd(0.7, 1.1);
+        const o = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain(), lp = ctx.createBiquadFilter(), pn = ctx.createStereoPanner();
+        o.type = "sawtooth"; o2.type = "sine";
+        [o, o2].forEach((x, k) => { const m = k ? 2.01 : 1; x.frequency.setValueAtTime(f0 * m, t0); x.frequency.exponentialRampToValueAtTime(f1 * m, t0 + dur * 0.45); x.frequency.exponentialRampToValueAtTime(f2 * m, t0 + dur); });
+        const vib = ctx.createOscillator(), vg = ctx.createGain(); vib.frequency.value = rnd(4, 7); vg.gain.value = 6; vib.connect(vg); vg.connect(o.frequency);
+        lp.type = "lowpass"; lp.frequency.value = 700; pn.pan.value = rnd(-0.7, 0.7);
+        g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(0.16, t0 + dur * 0.3); g.gain.linearRampToValueAtTime(0, t0 + dur);
+        o.connect(lp); o2.connect(lp); lp.connect(g); g.connect(pn); pn.connect(out); pn.connect(deep);
+        [o, o2, vib].forEach(x => { x.start(t0); x.stop(t0 + dur + 0.1); });
+      }, [1, 4]);
+      return () => { try { bed.stop(); } catch (e) {} song(); };
+    } },
+  { id: "winter",  icon: "❄️", name: "겨울 밤바람",     desc: "창틈으로 휘이 부는 바람",        vol: .35, rev: .25,
+    make: out => {
+      const stopGust = loopLayer("wind", 14, 700)(out);
+      const src = ctx.createBufferSource(); src.buffer = makeLoop(4, t => { for (let i = 0; i < t.length; i++) t[i] = white(); }); src.loop = true;
+      const parts = [[820, 0.07], [1310, 0.05]].map(([f, a], k) => {   // 휘파람 같은 바람 (좁은 대역이 천천히 오르내림)
+        const bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = f; bp.Q.value = 28;
+        const l1 = ctx.createOscillator(), l2 = ctx.createOscillator(), g1 = ctx.createGain(), g2 = ctx.createGain();
+        l1.frequency.value = rnd(0.03, 0.06); l2.frequency.value = rnd(0.11, 0.2); g1.gain.value = f * 0.35; g2.gain.value = f * 0.08;
+        l1.connect(g1); l2.connect(g2); g1.connect(bp.frequency); g2.connect(bp.frequency); l1.start(); l2.start();
+        const g = ctx.createGain(); g.gain.value = a * 9;
+        const am = ctx.createOscillator(), ag = ctx.createGain(); am.frequency.value = rnd(0.05, 0.09); ag.gain.value = a * 7; am.connect(ag); ag.connect(g.gain); am.start();
+        const pn = ctx.createStereoPanner(); pn.pan.value = k ? 0.5 : -0.4;
+        src.connect(bp); bp.connect(g); g.connect(pn); pn.connect(out);
+        return [l1, l2, am];
+      });
+      src.start();
+      return () => { stopGust(); try { src.stop(); parts.flat().forEach(o => o.stop()); } catch (e) {} };
+    } },
+  { id: "heart",   icon: "💓", name: "심장 박동",       desc: "쿵-쿵, 20분에 걸쳐 점점 느려짐", vol: .5,  rev: 0,
+    make: out => {
+      const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 260; lp.connect(out);
+      const thump = (t0, f, f2, dec, a) => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.frequency.setValueAtTime(f, t0); o.frequency.exponentialRampToValueAtTime(f2, t0 + dec);
+        g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(a, t0 + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dec);
+        o.connect(g); g.connect(lp); o.start(t0); o.stop(t0 + dec + 0.05);
+      };
+      const begin = ctx.currentTime; let next = begin + 0.3;
+      const tick = setInterval(() => {                    // 1초 앞까지 미리 예약 (박자가 흔들리지 않게)
+        while (next < ctx.currentTime + 1) {
+          const mins = (next - begin) / 60, bpm = 66 - 10 * Math.min(1, mins / 20);   // 66 → 56 (20분)
+          thump(next, 62, 42, 0.14, 0.9); thump(next, 124, 80, 0.06, 0.25);            // '쿵' (첫 소리, 낮고 큼)
+          thump(next + 0.3, 78, 55, 0.1, 0.6);                                          // '쿵' (둘째 소리, 짧게)
+          next += 60 / bpm * rnd(0.98, 1.02);
+        }
+      }, 200);
+      return () => clearInterval(tick);
+    } },
   { id: "hz432",   icon: "〰", name: "432Hz 명상음",  desc: "잔잔하게 이어지는 432Hz",     vol: .3,  rev: 0,   make: toneLayer(432, [[1, .22], [0.5, .16], [0.5, .1, 0.25], [1.5, .05], [2, .03]]) },
   { id: "hz528",   icon: "〰", name: "528Hz 명상음",  desc: "잔잔하게 이어지는 528Hz",     vol: .3,  rev: 0,   make: toneLayer(528, [[1, .2], [0.5, .16], [0.5, .1, 0.25], [1.5, .04], [2, .03]]) },
 ];
@@ -1045,6 +1214,12 @@ const MIXES = [
   { id: "sea",    icon: "🌊", name: "밤바다",         layers: { ocean: .55, wind: .25 } },
   { id: "cave",   icon: "🧘", name: "깊은 명상",      layers: { bowls: .4, hz432: .22, drops: .25 } },
   { id: "sleep",  icon: "😴", name: "깊은 잠",        layers: { rain: .45, hz432: .15, wind: .15 } },
+  { id: "storm",  icon: "⛈", name: "비 오는 밤 천둥", layers: { thunder: .5, roof: .3, rain: .25 } },
+  { id: "dawn",   icon: "🏯", name: "산사의 새벽",    layers: { moktak: .35, emille: .35, chimes: .25, birds: .25 } },
+  { id: "valley", icon: "🏞", name: "깊은 계곡",      layers: { waterfall: .4, birds: .3, wind: .2 } },
+  { id: "kNight", icon: "🌙", name: "한국의 여름밤",  layers: { owl: .3, frogs: .25, crickets: .2 } },
+  { id: "noise",  icon: "🟤", name: "수면 잡음",      layers: { brownn: .45, rain: .15 } },
+  { id: "heartS", icon: "💓", name: "심장 소리 재우기", layers: { heart: .5, brownn: .2 } },
 ];
 let myMixes = ls.get("mixes", []);
 function applyMix(m) {
@@ -1099,7 +1274,8 @@ function ambCfg() {
   }
   cls.amb = a; return a;
 }
-const TRIM = { stream: 2.4, rain: 1.8, birds: 3, crickets: 4, frogs: 3, drops: 3, emille: 0.6 };   // 소리끼리 크기 맞춤 (실측)
+const TRIM = { stream: 2.4, rain: 1.8, birds: 3, crickets: 4, frogs: 3, drops: 3, emille: 0.6,
+  thunder: 2, waterfall: 0.6, moktak: 1.3, owl: 2.5, bamboo: 3, leafrain: 2, winter: 1.5, heart: 0.55 };   // 소리끼리 크기 맞춤 (실측)
 function startLayer(S, vol) {
   const g = ctx.createGain(); g.gain.value = 0;
   const tg = ctx.createGain(); tg.gain.value = 3 * (TRIM[S.id] || 1); g.connect(tg); tg.connect(ambG);
