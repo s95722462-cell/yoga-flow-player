@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Yoga Flow Player</title>
 <!-- 링크 미리보기 (카카오톡·문자·SNS). 주소가 생기면 og:image·og:url 을 https://주소/... 전체 주소로 바꾸세요 -->
 <meta name="description" content="요가 수업 중 음악을 끊김 없이 전환하는 플레이어 — 싱잉볼, 사바아사나 타이머, 배경 소리 17종 믹스. 설치 없이 브라우저에서 바로.">
@@ -59,6 +59,27 @@
 
   .grid { display: grid; grid-template-columns: 1.25fr 1fr; gap: 16px; }
   @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  /* 모바일: 긴 곡 이름이 칸을 밀어내지 않게, 화면 밖으로 안 나가게 */
+  .grid > *, .tools3 > *, .card, .now, .prog, .queue li, .queue .nm { min-width: 0; max-width: 100%; }
+  html, body { overflow-x: hidden; }
+  .title { width: 100%; }
+  @media (max-width: 600px) {
+    .wrap { padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); }
+    input, select, textarea { font-size: 16px !important; }     /* iOS: 16px 미만이면 누를 때 화면이 확대됨 */
+    .card { padding: 14px; border-radius: 16px; }
+    .now { padding: 20px 14px; gap: 12px; }
+    .orb { width: 150px; height: 150px; } .orb .core { width: 96px; height: 96px; } .orb .core b { font-size: 22px; }
+    .title { font-size: 18px; }
+    .ctrl { gap: 10px; } .cbtn { width: 52px; height: 52px; } .cbtn.big { width: 74px; height: 74px; }
+    .abtn { padding: 10px 12px; font-size: 13px; } .abtn kbd, .keys { display: none; }
+    header .chip { width: 100%; } header .chip select { flex: 1; min-width: 0; }
+    .queue li { grid-template-columns: 18px 24px minmax(0, 1fr) auto; gap: 6px; padding: 8px; }
+    .queue .tools .ibtn { opacity: 1; }
+    .queue .edit input[type=range] { width: 90px; }
+    .amb-head input[type=range] { width: 90px; }
+    .amb-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .snd { padding: 10px; } .snd .t { font-size: 13px; }
+  }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 18px; backdrop-filter: blur(12px); }
   .card h3 { margin: 0 0 12px; font-size: 14px; font-weight: 600; color: var(--dim); letter-spacing: .2px; display: flex; align-items: center; gap: 8px; }
   .card h3 .sp { flex: 1; }
