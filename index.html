@@ -167,6 +167,14 @@
   .snd input[type=range] { display: none; height: 4px; }
   .snd.on { background: #5eead414; border-color: #5eead455; }
   .snd.on input[type=range] { display: block; }
+  .snd .fx { position: absolute; right: 8px; bottom: 8px; display: flex; gap: 4px; }
+  .snd .fx button { width: 24px; height: 24px; border-radius: 6px; border: 1px solid var(--line); background: #0b1113cc; cursor: pointer; font-size: 12px; display: grid; place-items: center; }
+  .snd .fx button:hover { background: #ffffff22; }
+  .snd .fx button.del:hover { background: #ef444433; color: #fca5a5; }
+  .snd.user { padding-bottom: 38px; }
+  .snd.user.on input[type=range] { margin-right: 60px; }
+  .snd.add { border-style: dashed; color: var(--dim); align-items: center; justify-content: center; text-align: center; }
+  .snd.add:hover { color: var(--accent2); border-color: var(--accent); }
   .snd.on::after { content: ""; position: absolute; right: 10px; top: 12px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
   .amb.off .snd.on { opacity: .45; }
   .sleep-left { color: var(--warm, #fbbf77); font-variant-numeric: tabular-nums; }
@@ -302,7 +310,7 @@
     <div class="mixes" id="mixes"></div>
     <div class="amb-grid" id="ambGrid"></div>
     <p class="muted" style="margin:12px 0 0">여러 소리를 함께 켜서 섞을 수 있습니다 (예: 빗소리 + 풍경 + 432Hz). 음악 아래에 계속 깔리고 곡이 바뀌어도 끊기지 않습니다. 파일 없이 이 프로그램이 직접 만드는 소리입니다.</p>
-    <input type="file" id="ambIn" accept="audio/*" hidden>
+    <input type="file" id="ambIn" accept="audio/*" multiple hidden>
   </section>
 
   <div class="keys">
@@ -825,14 +833,17 @@ const SOUNDS = [
     make: out => every(14, 24, () => strike(out, pick([174, 196, 220, 261]), BELLS.bowl.parts, rnd(1.2, 2.2), 0.4), [0.3, 1]) },
   { id: "hz432",   icon: "〰", name: "432Hz 명상음",  desc: "잔잔하게 이어지는 432Hz",     vol: .3,  rev: 0,   make: toneLayer(432, [[1, .22], [0.5, .16], [0.5, .1, 0.25], [1.5, .05], [2, .03]]) },
   { id: "hz528",   icon: "〰", name: "528Hz 명상음",  desc: "잔잔하게 이어지는 528Hz",     vol: .3,  rev: 0,   make: toneLayer(528, [[1, .2], [0.5, .16], [0.5, .1, 0.25], [1.5, .04], [2, .03]]) },
-  { id: "file",    icon: "📁", name: "내 파일",        desc: "가진 소리 파일 반복",         vol: .6,  rev: 0,
-    make: out => {
-      const fid = cls.amb.fid; if (!fid) return () => {};
-      const el = new Audio(); el.loop = true; let alive = true;
-      urlFor(fid).then(u => { if (!alive || !u) return; el.src = u; ctx.createMediaElementSource(el).connect(out); el.play().catch(() => {}); });
-      return () => { alive = false; el.pause(); };
-    } },
 ];
+function fileSound(f) {                                   // 내 소리 파일 한 개 = 카드 한 개 (반복 재생)
+  return { id: "file:" + f.fid, icon: "📁", name: f.name.replace(/\.[^.]+$/, ""), desc: "내 파일 · 반복", vol: .6, rev: 0, user: f,
+    make: out => {
+      const el = new Audio(); el.loop = true; let alive = true;
+      urlFor(f.fid).then(u => { if (!alive || !u) return; el.src = u; ctx.createMediaElementSource(el).connect(out); el.play().catch(() => {}); });
+      return () => { alive = false; el.pause(); el.removeAttribute("src"); };
+    } };
+}
+const allSounds = () => [...SOUNDS, ...(ambCfg().files || []).map(fileSound)];
+const soundOf = id => allSounds().find(S => S.id === id);
 const MIXES = [
   { id: "camp",   icon: "🏕", name: "비 오는 캠핑",   layers: { tent: .55, fire: .35, wind: .2 } },
   { id: "home",   icon: "🏠", name: "비 오는 날 집",  layers: { roof: .45, rain: .3, hz432: .12 } },
@@ -846,7 +857,7 @@ const MIXES = [
 let myMixes = ls.get("mixes", []);
 function applyMix(m) {
   const a = ambCfg(); a.layers = {};
-  for (const [id, v] of Object.entries(m.layers)) a.layers[id] = { on: true, vol: v };
+  for (const [id, v] of Object.entries(m.layers)) if (soundOf(id)) a.layers[id] = { on: true, vol: v };   // 지운 내 파일은 건너뜀
   a.on = true; saveCls(); ambApply(); toast(`믹스: ${m.name}`);
 }
 function mixMatch(m) {
@@ -859,7 +870,7 @@ function renderMixes() {
   const add = (m, mine) => {
     const b = document.createElement("span"); b.className = "mix" + (mixMatch(m) ? " on" : "");
     b.innerHTML = `<span>${m.icon || "⭐"}</span><span class="n"></span>`; b.querySelector(".n").textContent = m.name;
-    b.title = Object.keys(m.layers).map(id => SOUNDS.find(S => S.id === id)?.name).filter(Boolean).join(" + ");
+    b.title = Object.keys(m.layers).map(id => soundOf(id)?.name).filter(Boolean).join(" + ");
     b.onclick = () => applyMix(m);
     if (mine) {
       const x = document.createElement("span"); x.className = "x"; x.textContent = "✕"; x.title = "이 믹스 지우기";
@@ -873,7 +884,7 @@ function renderMixes() {
   const sv = document.createElement("span"); sv.className = "mix save"; sv.textContent = "＋ 지금 조합 저장";
   sv.onclick = async () => {
     const a = ambCfg(), layers = {};
-    for (const [id, l] of Object.entries(a.layers)) if (l.on && id !== "file") layers[id] = l.vol ?? SOUNDS.find(S => S.id === id).vol;
+    for (const [id, l] of Object.entries(a.layers)) if (l.on && soundOf(id)) layers[id] = l.vol ?? soundOf(id).vol;
     if (!Object.keys(layers).length) { toast("먼저 소리를 하나 이상 켜세요"); return; }
     const n = await ask("내 믹스 이름", "나의 믹스"); if (!n) return;
     myMixes.push({ id: uid(), icon: "⭐", name: n, layers }); ls.set("mixes", myMixes); renderMixes(); toast("믹스를 저장했습니다");
@@ -888,7 +899,12 @@ function ambCfg() {
     if (map[a.type]) layers[map[a.type]] = { on: true };
     a = { on: !!a.on, vol: a.vol ?? 0.6, layers, fid: a.fid, fname: a.name };
   }
-  a.layers = a.layers || {}; a.vol = a.vol ?? 0.6;
+  a.layers = a.layers || {}; a.vol = a.vol ?? 0.6; a.files = a.files || [];
+  if (a.fid) {                                             // 예전 '내 파일' 한 칸 → 목록으로
+    if (!a.files.some(f => f.fid === a.fid)) a.files.push({ fid: a.fid, name: a.fname || "내 파일" });
+    if (a.layers.file) { a.layers["file:" + a.fid] = a.layers.file; delete a.layers.file; }
+    delete a.fid; delete a.fname;
+  }
   cls.amb = a; return a;
 }
 const TRIM = { stream: 2.4, rain: 1.8, birds: 3, crickets: 4, frogs: 3, drops: 3, emille: 0.6 };   // 소리끼리 크기 맞춤 (실측)
@@ -909,8 +925,10 @@ function ambApply() {
   const a = ambCfg();
   $("ambOn").checked = a.on; $("ambVol").value = a.vol;
   $("ambCard").classList.toggle("off", !a.on);
-  for (const S of SOUNDS) {
-    const L = a.layers[S.id], want = a.on && L && L.on && (S.id !== "file" || a.fid);
+  const list = allSounds();
+  for (const id of Object.keys(running)) if (!list.some(S => S.id === id)) stopLayer(id);   // 지운 파일
+  for (const S of list) {
+    const L = a.layers[S.id], want = a.on && L && L.on;
     if (want && !running[S.id]) { resume(); startLayer(S, L.vol ?? S.vol); }
     else if (!want && running[S.id]) stopLayer(S.id);
     else if (want) ramp(running[S.id].g.gain, L.vol ?? S.vol, 0.15);
@@ -921,34 +939,64 @@ function ambApply() {
 function renderAmb() {
   renderMixes();
   const a = ambCfg(), grid = $("ambGrid"); grid.innerHTML = "";
-  for (const S of SOUNDS) {
+  for (const S of allSounds()) {
     const L = a.layers[S.id] || {}, b = document.createElement("div");
-    b.className = "snd" + (L.on ? " on" : ""); b.tabIndex = 0;
+    b.className = "snd" + (L.on ? " on" : "") + (S.user ? " user" : ""); b.tabIndex = 0;
     b.innerHTML = `<span class="t"><i>${S.icon}</i><b></b></span><small></small><input type="range" min="0" max="1" step="0.01" title="이 소리 볼륨">`;
     b.querySelector("b").textContent = S.name;
-    b.querySelector("small").textContent = S.id === "file" && a.fname ? a.fname : S.desc;
+    b.querySelector("small").textContent = S.desc;
+    if (S.user) b.title = S.user.name;
     const r = b.querySelector("input"); r.value = L.vol ?? S.vol;
     r.onclick = e => e.stopPropagation();
     r.oninput = () => { a.layers[S.id] = { ...L, on: true, vol: +r.value }; if (running[S.id]) ramp(running[S.id].g.gain, +r.value, 0.1); };
     r.onchange = () => { saveCls(); renderMixes(); };
     b.onclick = () => {
-      if (S.id === "file" && !a.fid) { $("ambIn").click(); return; }
       const on = !L.on;
       a.layers[S.id] = { ...L, on, vol: L.vol ?? S.vol };
       if (on && !a.on) a.on = true;                          // 소리를 고르면 전체도 켬
       saveCls(); ambApply();
     };
-    if (S.id === "file") { b.oncontextmenu = e => { e.preventDefault(); $("ambIn").click(); }; b.title = "누르면 켜기·끄기, 오른쪽 클릭으로 다른 파일 고르기"; }
+    if (S.user) {
+      const fx = document.createElement("span"); fx.className = "fx";
+      fx.innerHTML = '<button class="chg" title="다른 파일로 바꾸기">⇄</button><button class="del" title="이 파일 지우기">✕</button>';
+      fx.querySelector(".chg").onclick = e => { e.stopPropagation(); ambPick(S.user.fid); };
+      fx.querySelector(".del").onclick = async e => {
+        e.stopPropagation();
+        a.files = a.files.filter(f => f !== S.user); delete a.layers[S.id];
+        await saveCls(); ambApply(); maybeDeleteFile(S.user.fid); toast(`지웠습니다: ${S.name}`);
+      };
+      b.appendChild(fx);
+    }
     grid.appendChild(b);
   }
+  const add = document.createElement("div");
+  add.className = "snd add"; add.tabIndex = 0;
+  add.innerHTML = '<span class="t"><i>＋</i><b>내 소리 추가</b></span><small>mp3·wav 등, 여러 개 가능</small>';
+  add.onclick = () => ambPick(null);
+  grid.appendChild(add);
 }
+let ambReplace = null;                                    // 바꿀 파일 id (없으면 새로 추가)
+function ambPick(fid) { ambReplace = fid; const i = $("ambIn"); i.multiple = !fid; i.click(); }
 $("ambIn").onchange = async e => {
-  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
-  const a = ambCfg(), id = uid(); await putFile({ id, name: f.name, blob: f });
-  const old = a.fid; a.fid = id; a.fname = f.name; a.on = true; a.layers.file = { on: true, vol: a.layers.file?.vol ?? 0.6 };
-  if (running.file) stopLayer("file");
-  await saveCls(); if (old) maybeDeleteFile(old);
-  setTimeout(ambApply, running.file ? 1700 : 0);
+  const fs = [...e.target.files]; e.target.value = ""; if (!fs.length) return;
+  const a = ambCfg();
+  if (ambReplace) {                                        // 바꾸기: 같은 자리, 같은 볼륨으로 새 파일
+    const old = a.files.find(f => f.fid === ambReplace); if (!old) return;
+    const f = fs[0], id = uid(); await putFile({ id, name: f.name, blob: f });
+    const L = a.layers["file:" + old.fid];
+    if (running["file:" + old.fid]) stopLayer("file:" + old.fid);
+    delete a.layers["file:" + old.fid];
+    const oldFid = old.fid; old.fid = id; old.name = f.name;
+    if (L) a.layers["file:" + id] = L;
+    await saveCls(); maybeDeleteFile(oldFid); ambApply(); toast(`바꿨습니다: ${f.name}`);
+  } else {
+    for (const f of fs) {
+      const id = uid(); await putFile({ id, name: f.name, blob: f });
+      a.files.push({ fid: id, name: f.name }); a.layers["file:" + id] = { on: true, vol: 0.6 };
+    }
+    a.on = true; await saveCls(); ambApply(); toast(`${fs.length}개 추가했습니다`);
+  }
+  ambReplace = null;
 };
 function ambToggle(on) {
   const a = ambCfg(); a.on = on;
@@ -990,7 +1038,7 @@ async function addFiles(list) {
   toast(`${fs.length}곡 추가했습니다`);
 }
 async function maybeDeleteFile(fid) {                   // 다른 수업에서 안 쓰면 저장소에서도 지움
-  const used = classes.some(c => c.items.some(i => i.fid === fid) || (c.amb && c.amb.fid === fid));
+  const used = classes.some(c => c.items.some(i => i.fid === fid) || (c.amb && (c.amb.fid === fid || (c.amb.files || []).some(f => f.fid === fid))));
   if (!used) { await delFile(fid); if (urls.has(fid)) { URL.revokeObjectURL(urls.get(fid)); urls.delete(fid); } }
 }
 let openItem = null, dragFrom = null;
@@ -1108,6 +1156,7 @@ $("classDel").onclick = async () => {
   const n = await ask(`"${cls.name}" 수업을 지우려면  삭제  라고 입력하세요`, ""); if (n !== "삭제") return;
   const gone = cls; classes = classes.filter(c => c !== gone); await delClass(gone.id);
   for (const it of gone.items) await maybeDeleteFile(it.fid);
+  for (const f of gone.amb?.files || []) await maybeDeleteFile(f.fid);
   if (gone.amb?.fid) await maybeDeleteFile(gone.amb.fid);
   selectClass(classes[0].id); toast("수업을 지웠습니다");
 };
