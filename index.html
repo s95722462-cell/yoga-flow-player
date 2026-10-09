@@ -232,6 +232,43 @@
   .sleep-left { color: var(--warm, #fbbf77); font-variant-numeric: tabular-nums; }
   .amb-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
 
+  /* 모닝콜 */
+  .alarm { margin-top: 16px; }
+  .al-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px 18px; }
+  .al-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--dim); }
+  .al-row b { color: var(--text); font-weight: 500; min-width: 84px; }
+  .al-time { font-size: 30px !important; height: 52px !important; width: 150px; font-weight: 600; text-align: center; }
+  .days { display: flex; gap: 4px; }
+  .days button { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: #ffffff08; color: var(--dim); cursor: pointer; font-size: 13px; }
+  .days button.on { background: #fbbf7733; border-color: #fbbf7799; color: #fde2bd; }
+  .al-start { width: 100%; margin-top: 14px; padding: 15px; border: none; border-radius: 14px; font-size: 16px; font-weight: 600; cursor: pointer;
+    background: linear-gradient(135deg, #f59e0b, #b45309); color: #1c1003; box-shadow: 0 12px 30px -12px #f59e0baa; }
+  .al-next { margin-top: 8px; text-align: center; font-size: 13px; color: #fde2bd; min-height: 18px; }
+  .al-help { margin-top: 14px; border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; font-size: 13px; color: var(--dim); line-height: 1.75; }
+  .al-help summary { cursor: pointer; color: var(--text); font-weight: 500; }
+  .al-help ol { margin: 8px 0 6px; padding-left: 20px; }
+  .al-help b { color: var(--text); }
+  .al-help .warn { color: #fde2bd; }
+  .al-miss { margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: #f8717122; border: 1px solid #f8717155; color: #fecaca; font-size: 13px; }
+
+  .night { position: fixed; inset: 0; z-index: 50; background: #000; color: #9ca3af; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 14px; padding: max(24px, env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom)); text-align: center; }
+  .night[hidden] { display: none; }
+  .night .clock { font-size: clamp(64px, 22vw, 150px); font-weight: 200; color: #e5e7eb; letter-spacing: -2px; font-variant-numeric: tabular-nums; line-height: 1; opacity: .85; }
+  .night .when { font-size: 18px; color: #fbbf77; }
+  .night .st { font-size: 14px; max-width: 420px; line-height: 1.6; }
+  .night .tips { font-size: 12.5px; color: #6b7280; line-height: 1.8; max-width: 440px; }
+  .night .nb { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 10px; }
+  .night .nb button { padding: 14px 22px; border-radius: 14px; border: 1px solid #ffffff22; background: #ffffff0a; color: #d1d5db; font-size: 15px; cursor: pointer; }
+  .night.ring { background: radial-gradient(circle at 50% 30%, #78350f, #1c1003 70%); }
+  .night.ring .clock { color: #fff; opacity: 1; font-weight: 300; }
+  .night .wake { display: none; flex-direction: column; gap: 12px; width: min(420px, 100%); }
+  .night.ring .wake { display: flex; }
+  .night.ring .sleepui { display: none; }
+  .night .wake .hi { font-size: 26px; color: #fde68a; font-weight: 600; }
+  .night .wake button { padding: 22px; border-radius: 18px; border: none; font-size: 20px; font-weight: 700; cursor: pointer; }
+  .night .wake .up { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #1c1003; }
+  .night .wake .snz { background: #ffffff18; color: #fde2bd; font-size: 17px; font-weight: 500; }
   .toast {
     position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px); padding: 10px 16px; border-radius: 12px;
     background: #0b1113ee; border: 1px solid var(--line); font-size: 14px; opacity: 0; transition: .25s; pointer-events: none; z-index: 10;
@@ -365,6 +402,46 @@
     <input type="file" id="ambIn" accept="audio/*" multiple hidden>
   </section>
 
+  <section class="card alarm" id="alarmCard">
+    <h3>🌅 모닝콜 <span class="muted" style="font-weight:400">— 잠들 때 켜 두면 아침에 부드럽게 깨워 줍니다</span></h3>
+    <div class="al-grid">
+      <div>
+        <div class="al-row"><input type="time" id="alTime" class="al-time" value="06:30"></div>
+        <div class="al-row" style="margin-top:10px"><b>반복 요일</b><div class="days" id="alDays"></div></div>
+        <p class="muted" style="margin:6px 0 0">요일을 안 고르면 다음 그 시각에 한 번 울립니다.</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="al-row"><b>깨우는 소리</b><select id="alSound" style="flex:1;min-width:0"></select></div>
+        <div class="al-row"><b>서서히 커짐</b><select id="alRamp"><option value="5">5분 동안</option><option value="10" selected>10분 동안</option><option value="15">15분 동안</option></select></div>
+        <div class="al-row"><b>최대 볼륨</b><input type="range" id="alMax" min="0.2" max="1" step="0.05" value="0.8" style="flex:1"><span id="alMaxL">80%</span></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="al-row"><b>잠들기 소리</b><span id="alSleepName" style="color:var(--text)">배경 소리에서 고른 소리</span></div>
+        <div class="al-row"><b>잠들기 시간</b><select id="alSleepMin"><option value="15">15분 뒤 작게</option><option value="30" selected>30분 뒤 작게</option><option value="60">60분 뒤 작게</option></select></div>
+        <div class="al-row"><b>밤새 크기</b><select id="alKeep"><option value="0.03">거의 안 들리게</option><option value="0.08" selected>아주 작게</option><option value="0.18">은은하게</option></select></div>
+      </div>
+    </div>
+    <button class="al-start" id="alStart">🌙 잠들기 시작 (모닝콜 켜기) · 🔌 충전 중일 때</button>
+    <div class="al-next" id="alNext"></div>
+    <div class="al-miss" id="alMiss" hidden></div>
+    <details class="al-help" open>
+      <summary>모닝콜은 이렇게 작동해요 (꼭 읽어 주세요)</summary>
+      <ol>
+        <li><b>잠들기 시작</b>을 누르면 고른 수면 소리(예: 빗소리)가 나오다가, 정한 시간이 지나면 <b>아주 작은 소리로 줄어 밤새 계속</b> 나옵니다.</li>
+        <li><b>앱은 꺼지지 않습니다.</b> 화면만 꺼지고, 앱은 아주 작은 소리를 내면서 밤새 깨어 기다립니다. 소리가 완전히 멈추면 휴대폰이 앱을 잠재워서 아침에 깨울 수 없기 때문입니다.</li>
+        <li>기상 시간 <b>10분 전부터</b> 깨우는 소리가 아주 작게 시작해 점점 커지고, 기상 시간에 종이 울립니다.</li>
+        <li><b>일어났어요</b>를 누를 때까지 2분마다 조금씩 더 커집니다. <b>5분 더</b>를 누르면 5분 뒤 다시 울립니다.</li>
+      </ol>
+      <div class="warn">꼭 지켜 주세요</div>
+      <ul style="margin:4px 0 0;padding-left:20px">
+        <li>화면은 꺼도 되지만 <b>앱을 닫거나(위로 밀어 종료) 다른 음악 앱을 틀지 마세요.</b> 앱이 꺼지면 아침에 울리지 않습니다.</li>
+        <li><b>충전 중일 때만 켤 수 있습니다.</b> 밤새 작은 소리를 내서 배터리를 쓰기 때문입니다. (안드로이드는 자동 확인, 아이폰은 시작할 때 직접 확인)</li>
+        <li>휴대폰 <b>볼륨 버튼으로 소리를 줄여 두면</b> 알람도 작게 나옵니다. 자기 전에 확인하세요.</li>
+        <li>휴대폰 기본 알람만큼 확실하지는 않습니다. <b>중요한 날은 기본 알람도 함께</b> 맞춰 두세요.</li>
+      </ul>
+    </details>
+  </section>
+
   <div class="keys">
     <kbd>Space</kbd> 재생·멈춤 (부드럽게) &nbsp; <kbd>N</kbd>/<kbd>→</kbd> 다음 곡 전환 &nbsp; <kbd>←</kbd> 이전 곡 &nbsp; <kbd>F</kbd> 서서히 끄기 &nbsp;
     <kbd>B</kbd> 싱잉볼 &nbsp; <kbd>S</kbd> 사바아사나 타이머 &nbsp; <kbd>A</kbd> 배경 소리 &nbsp; <kbd>↑</kbd><kbd>↓</kbd> 볼륨 &nbsp; <kbd>Z</kbd> 수업 모드
@@ -384,6 +461,21 @@
   </div>
   <div class="btns"><button class="ibtn on" id="helpOk">확인</button></div>
 </dialog>
+<div class="night" id="night" hidden>
+  <div class="clock" id="nClock">00:00</div>
+  <div class="sleepui">
+    <div class="when" id="nWhen"></div>
+    <div class="st" id="nState"></div>
+    <div class="tips">화면을 꺼도 됩니다 · 앱은 닫지 마세요 · 충전기 연결 · 볼륨 확인</div>
+    <div class="st" id="nCharge" hidden style="color:#fca5a5">🔌 충전기가 빠졌습니다 — 배터리가 닳을 수 있어요. 다시 꽂아 주세요.</div>
+    <div class="nb"><button id="nTest">🔔 깨우는 소리 미리 듣기 (5초)</button><button id="nCancel">모닝콜 끄기</button></div>
+  </div>
+  <div class="wake">
+    <div class="hi">좋은 아침이에요 ☀️</div>
+    <button class="up" id="nUp">일어났어요</button>
+    <button class="snz" id="nSnooze">5분 더</button>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1120,6 +1212,207 @@ setInterval(() => {
   setTimeout(() => { const a = ambCfg(); a.on = false; saveCls(); ambApply(); }, 30500);
 }, 500);
 
+// ================= 모닝콜 =================
+// 앱은 꺼지지 않고, 아주 작은 소리를 밤새 내며 기다리다가 기상 시간에 깨움 (휴대폰이 웹앱을 스스로 깨울 수는 없음)
+const AL0 = { time: "06:30", days: [], sound: "birds_bowl", ramp: 10, max: 0.8, sleepMin: 30, keep: 0.08 };
+let AL = { ...AL0, ...ls.get("alarm", {}) };
+const DAYN = ["일", "월", "화", "수", "목", "금", "토"];
+const WAKE = {
+  birds_bowl: { name: "새소리 + 싱잉볼", layers: ["birds", "bowls"] },
+  birds_stream: { name: "새소리 + 시냇물", layers: ["birds", "stream"] },
+  bowl: { name: "싱잉볼 (울림 반복)", every: [12, "bowl"] },
+  chime: { name: "차임 (맑은 소리 반복)", every: [7, "chime"] },
+  ocean_bowl: { name: "파도 + 싱잉볼", layers: ["ocean", "bowls"] },
+};
+function alSoundOptions() {
+  const sel = $("alSound"); sel.innerHTML = "";
+  const add = (v, t) => { const o = document.createElement("option"); o.value = v; o.textContent = t; sel.appendChild(o); };
+  Object.entries(WAKE).forEach(([k, w]) => add(k, w.name));
+  items().forEach((it, i) => add("song:" + it.fid, "🎵 " + it.name));
+  sel.value = [...sel.options].some(o => o.value === AL.sound) ? AL.sound : "birds_bowl";
+}
+function alNextTime(from = new Date()) {                  // 다음 울릴 시각 (반복 요일 반영)
+  const [h, m] = AL.time.split(":").map(Number);
+  for (let k = 0; k < 8; k++) {
+    const d = new Date(from); d.setDate(d.getDate() + k); d.setHours(h, m, 0, 0);
+    if (d > from && (!AL.days.length || AL.days.includes(d.getDay()))) return d;
+  }
+  return null;
+}
+const hm = d => `${d.getMonth() + 1}/${d.getDate()}(${DAYN[d.getDay()]}) ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+function left(ms) { const m = Math.max(0, Math.round(ms / 60000)); return m >= 60 ? `${Math.floor(m / 60)}시간 ${m % 60}분` : `${m}분`; }
+function alSave() { ls.set("alarm", AL); alShowNext(); }
+function alShowNext() { const d = alNextTime(); $("alNext").textContent = d ? `다음 모닝콜: ${hm(d)} · ${left(d - new Date())} 뒤` : ""; }
+function alUI() {
+  $("alTime").value = AL.time; $("alRamp").value = AL.ramp; $("alMax").value = AL.max; $("alMaxL").textContent = Math.round(AL.max * 100) + "%";
+  $("alSleepMin").value = AL.sleepMin; $("alKeep").value = AL.keep;
+  const box = $("alDays"); box.innerHTML = "";
+  [1, 2, 3, 4, 5, 6, 0].forEach(d => {
+    const b = document.createElement("button"); b.textContent = DAYN[d]; b.className = AL.days.includes(d) ? "on" : "";
+    b.onclick = () => { AL.days = AL.days.includes(d) ? AL.days.filter(x => x !== d) : [...AL.days, d]; alSave(); alUI(); };
+    box.appendChild(b);
+  });
+  alSoundOptions();
+  const a = cls ? ambCfg() : null, on = a ? Object.entries(a.layers).filter(([, l]) => l.on).map(([id]) => soundOf(id)?.name).filter(Boolean) : [];
+  $("alSleepName").textContent = on.length ? on.join(" + ") : "빗소리 (배경 소리를 안 골라서 기본)";
+  alShowNext();
+}
+$("alTime").onchange = e => { AL.time = e.target.value || "06:30"; alSave(); };
+$("alSound").onchange = e => { AL.sound = e.target.value; alSave(); };
+$("alRamp").onchange = e => { AL.ramp = +e.target.value; alSave(); };
+$("alMax").oninput = e => { AL.max = +e.target.value; $("alMaxL").textContent = Math.round(AL.max * 100) + "%"; };
+$("alMax").onchange = alSave;
+$("alSleepMin").onchange = e => { AL.sleepMin = +e.target.value; alSave(); };
+$("alKeep").onchange = e => { AL.keep = +e.target.value; alSave(); };
+
+// 밤새 깨어 있기용: Web Audio 와 별도로 아주 작은 소리 파일을 반복 (휴대폰이 '재생 중'으로 인식)
+let keepEl = null;
+function keepAlive(on) {
+  if (!on) { if (keepEl) { keepEl.pause(); keepEl = null; } return; }
+  if (keepEl) return;
+  const sr = 8000, n = sr * 2, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+  const w = (o, t) => [...t].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
+  w(0, "RIFF"); v.setUint32(4, 36 + n * 2, true); w(8, "WAVEfmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, "data"); v.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++) v.setInt16(44 + i * 2, Math.round((Math.random() * 2 - 1) * 24), true);   // 들리지 않을 만큼 작은 잡음
+  keepEl = new Audio(URL.createObjectURL(new Blob([buf], { type: "audio/wav" }))); keepEl.loop = true;
+  keepEl.play().catch(() => {});
+}
+
+// 깨우는 소리
+const wakeG = ctx.createGain(); wakeG.gain.value = 0; wakeG.connect(master);
+let wakeStops = [], wakeEl = null;
+function wakeStart(sec, toVol) {
+  resume(); wakeStop(true);
+  const w = WAKE[AL.sound];
+  if (w && w.layers) w.layers.forEach(id => {
+    const S = SOUNDS.find(x => x.id === id); if (!S) return;
+    const tg = ctx.createGain(); tg.gain.value = 3 * (TRIM[id] || 1) * (S.vol || .5) * 1.6; tg.connect(wakeG);
+    if (S.rev) { const sg = ctx.createGain(); sg.gain.value = S.rev; tg.connect(sg); sg.connect(rev); }
+    wakeStops.push(S.make(tg), () => setTimeout(() => tg.disconnect(), 4000));
+  });
+  if (w && w.every) {
+    const [gap, type] = w.every, b = BELLS[type];
+    const ring = () => strike(wakeG, b.f, b.parts, b.beat, 0.9);
+    ring(); const t = setInterval(ring, gap * 1000); wakeStops.push(() => clearInterval(t));
+  }
+  if (AL.sound.startsWith("song:")) {
+    const fid = AL.sound.slice(5);
+    wakeEl = new Audio(); wakeEl.loop = true;
+    urlFor(fid).then(u => { if (!u || !wakeEl) return; wakeEl.src = u; ctx.createMediaElementSource(wakeEl).connect(wakeG); wakeEl.play().catch(() => {}); });
+  }
+  const g = wakeG.gain, n0 = ctx.currentTime;
+  g.cancelScheduledValues(n0); g.setValueAtTime(0.0001, n0);
+  g.exponentialRampToValueAtTime(Math.max(0.0002, toVol * 0.15), n0 + sec * 0.6);   // 처음엔 아주 천천히 (해 뜨듯)
+  g.linearRampToValueAtTime(toVol, n0 + sec);
+}
+function wakeStop(now) {
+  if (!now) ramp(wakeG.gain, 0, 3, "out");
+  const fs = wakeStops; wakeStops = [];
+  const el = wakeEl; wakeEl = null;
+  setTimeout(() => { fs.forEach(f => { try { f(); } catch (e) {} }); if (el) el.pause(); }, now ? 0 : 3200);
+  if (now) { wakeG.gain.cancelScheduledValues(ctx.currentTime); wakeG.gain.value = 0; }
+}
+
+// 상태: idle → sleep(잠들기 소리) → keep(밤새 작게) → rise(서서히 커짐) → ring(울림)
+let AS = ls.get("alarmState", null);                    // { at: 알람 시각 ms, phase, sleepEnd }
+function asSave() { ls.set("alarmState", AS); }
+let batt = null;                                         // 충전 상태 (안드로이드 Chrome 만 읽을 수 있음, 아이폰은 못 읽음)
+try { if (navigator.getBattery) navigator.getBattery().then(b => { batt = b; b.addEventListener("chargingchange", alCharge); }); } catch (e) {}
+function alCharge() {
+  if (!batt || !AS) return;
+  $("nCharge").hidden = batt.charging;                    // 밤사이 충전기가 빠지면 경고
+}
+async function alStart() {
+  resume();
+  const at = alNextTime(); if (!at) { toast("기상 시간을 확인하세요"); return; }
+  if (batt) {                                             // 충전 중일 때만 (밤새 작은 소리를 내서 배터리를 쓰므로)
+    if (!batt.charging) { alert("충전기를 연결하면 모닝콜을 켤 수 있습니다.\n\n모닝콜은 밤새 아주 작은 소리를 내며 깨어 있어서 배터리를 씁니다."); return; }
+  } else if (!confirm("충전기를 꽂으셨나요?\n\n모닝콜은 밤새 아주 작은 소리를 내며 깨어 있어서 충전 중일 때만 쓰는 것을 권장합니다.\n(아이폰은 앱이 충전 여부를 알 수 없어서 직접 확인합니다)")) return;
+  const a = ambCfg();
+  if (!Object.values(a.layers).some(l => l.on)) a.layers.rain = { on: true, vol: 0.55 };
+  a.on = true; await saveCls(); ambApply();
+  if (playing) fadeStop(5);
+  AS = { at: +at, phase: "sleep", sleepEnd: Date.now() + AL.sleepMin * 60000, bump: 0 };
+  asSave(); keepAlive(true); wake(false); nightShow(true); alCharge();
+  toast(`모닝콜 ${hm(at)} — 잘 자요`);
+}
+function alEnd(msg) {
+  AS = null; asSave(); keepAlive(false); wakeStop(); nightShow(false);
+  const a = ambCfg(); a.on = false; saveCls(); ambApply();
+  if (msg) toast(msg);
+  alShowNext();
+}
+function nightShow(on) {
+  $("night").hidden = !on; $("night").classList.remove("ring");
+  if (on) msNight();
+}
+function msNight() {
+  if (!MS || !AS) return;
+  try { MS.metadata = new MediaMetadata({ title: `모닝콜 ${hm(new Date(AS.at))}`, artist: "Yoga Flow Player", album: "잠들기", artwork: [{ src: "icons/icon-512.png", sizes: "512x512", type: "image/png" }] }); } catch (e) {}
+}
+function alTick() {                                     // 1초마다 (화면이 꺼져도 소리가 나는 동안 돌아감)
+  const now = new Date();
+  if (!$("night").hidden) $("nClock").textContent = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+  if (!AS) return;
+  const t = Date.now(), riseAt = AS.at - AL.ramp * 60000;
+  if (AS.phase === "sleep" && t >= AS.sleepEnd) {         // 잠들기 소리 → 밤새 아주 작게
+    AS.phase = "keep"; asSave(); ramp(ambG.gain, AL.keep * ambCfg().vol, 60);
+  }
+  if ((AS.phase === "sleep" || AS.phase === "keep") && t >= riseAt) {    // 해 뜨듯 서서히
+    AS.phase = "rise"; asSave();
+    const sec = Math.max(5, (AS.at - t) / 1000);
+    wakeStart(sec, AL.max * 0.7); ramp(ambG.gain, 0, Math.min(120, sec), "out");
+  }
+  if (AS.phase === "rise" && t >= AS.at) {                // 기상 시간
+    AS.phase = "ring"; AS.ringAt = t; AS.bump = 0; asSave();
+    $("night").classList.add("ring");
+    ramp(wakeG.gain, AL.max * 0.8, 5);
+    strike(master, BELLS.bowl.f, BELLS.bowl.parts, BELLS.bowl.beat, 0.7 * AL.max);
+    try { navigator.vibrate && navigator.vibrate([400, 200, 400]); } catch (e) {}
+  }
+  if (AS.phase === "ring") {                              // 안 끄면 2분마다 조금씩 더 크게 + 종
+    const k = Math.floor((t - AS.ringAt) / 120000);
+    if (k > AS.bump) {
+      AS.bump = k; asSave();
+      ramp(wakeG.gain, Math.min(1, AL.max * (0.8 + 0.1 * k)), 4);
+      strike(master, BELLS.chime.f, BELLS.chime.parts, BELLS.chime.beat, Math.min(1, 0.6 + 0.1 * k));
+    }
+  }
+  if (!$("night").hidden && AS.phase !== "ring") {
+    $("nWhen").textContent = `⏰ ${hm(new Date(AS.at))} 기상 · ${left(AS.at - t)} 뒤`;
+    $("nState").textContent = AS.phase === "sleep" ? `잠들기 소리 재생 중 — ${left(AS.sleepEnd - t)} 뒤 아주 작게 줄어 밤새 이어집니다`
+      : AS.phase === "keep" ? `밤새 아주 작은 소리로 깨어 있는 중 — ${new Date(riseAt).getHours()}:${String(new Date(riseAt).getMinutes()).padStart(2, "0")}부터 서서히 깨웁니다`
+      : "깨우는 소리가 서서히 커지는 중…";
+  }
+}
+setInterval(alTick, 1000);
+$("alStart").onclick = alStart;
+$("nCancel").onclick = () => { if (confirm("모닝콜을 끌까요? 아침에 울리지 않습니다.")) alEnd("모닝콜을 껐습니다"); };
+$("nTest").onclick = () => { wakeStart(1, AL.max * 0.6); setTimeout(() => wakeStop(), 5000); };
+$("nUp").onclick = () => {
+  const again = AL.days.length;
+  alEnd("좋은 아침이에요 ☀️" + (again ? " — 다음 모닝콜은 오늘 밤 다시 '잠들기 시작'을 눌러 주세요" : ""));
+};
+$("nSnooze").onclick = () => {                           // 5분 더: 조용히 했다가 1분 동안 다시 커짐
+  wakeStop(); $("night").classList.remove("ring");
+  AS = { ...AS, at: Date.now() + 5 * 60000, phase: "keep" }; asSave();
+  const old = AL.ramp; AL.ramp = 1; setTimeout(() => (AL.ramp = old), 6 * 60000);
+  toast("5분 뒤 다시 깨울게요");
+};
+function alCheckMissed() {                               // 앱이 밤사이 꺼졌던 경우 알려 줌
+  if (!AS) return;
+  if (Date.now() > AS.at + 60000) {
+    $("alMiss").hidden = false;
+    $("alMiss").textContent = `⚠️ ${hm(new Date(AS.at))} 모닝콜이 울리지 못했습니다. 밤사이 앱이 꺼졌던 것 같습니다 (앱 종료·메모리 정리·배터리). 다음에는 앱을 닫지 말고 충전기를 꽂아 두세요.`;
+    AS = null; asSave();
+  } else {                                                // 다시 열었을 때 아직 시간 전이면 이어서 대기
+    $("alMiss").hidden = false;
+    $("alMiss").textContent = "앱이 다시 열렸습니다. 모닝콜을 이어서 기다리려면 아래 '잠들기 시작'을 다시 눌러 주세요 (휴대폰은 화면을 누르기 전에는 소리를 낼 수 없습니다).";
+    AS = null; asSave();
+  }
+}
+
 // ================= 곡 목록 =================
 async function addFiles(list) {
   const fs = [...list].filter(f => f.type.startsWith("audio/") || /\.(mp3|m4a|aac|wav|ogg|flac|opus)$/i.test(f.name));
@@ -1239,7 +1532,7 @@ async function selectClass(id) {
   decks.forEach(d => { d.item = null; });
   ls.set("lastClass", cls.id);
   $("xfSec").value = cls.xf; $("autoNext").checked = cls.auto;
-  fillClassSel(); render(); ambApply();
+  fillClassSel(); render(); ambApply(); if (typeof alUI === "function") alUI();
 }
 $("classSel").onchange = e => { e.target.blur(); selectClass(e.target.value); };
 $("classNew").onclick = async () => { const n = await ask("새 수업 이름", "새 수업"); if (!n) return; const c = newClass(n); classes.push(c); await putClass(c); selectClass(c.id); };
@@ -1319,6 +1612,7 @@ addEventListener("keydown", e => {
   setPlaying(false);
   await selectClass(ls.get("lastClass", classes[0].id));
   if (!db) toast("이 브라우저에선 곡이 저장되지 않습니다 (창을 닫으면 사라짐)");
+  alUI(); alCheckMissed();
   if (!ls.get("seenHelp", false)) { ls.set("seenHelp", true); $("helpDlg").showModal(); }
   tick();
 })();
