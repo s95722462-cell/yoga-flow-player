@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Yoga Flow Player</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0e1417">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Yoga Flow">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%235eead4'/%3E%3Cpath d='M32 14c6 8 6 16 0 24-6-8-6-16 0-24zM14 30c9 0 15 5 18 12-9 1-15-4-18-12zm36 0c-3 8-9 13-18 12 3-7 9-12 18-12z' fill='%230f2a2e'/%3E%3C/svg%3E">
 <style>
   :root {
@@ -382,7 +389,15 @@ const master = ctx.createGain(), duckG = ctx.createGain(), musicBus = ctx.create
 const analyser = ctx.createAnalyser(); analyser.fftSize = 512;
 musicBus.connect(duckG); duckG.connect(master); ambG.connect(master); master.connect(analyser); analyser.connect(ctx.destination);
 ambG.gain.value = 0;
-const resume = () => { if (ctx.state !== "running") ctx.resume(); };      // 브라우저는 첫 클릭 전엔 소리를 막음
+const resume = () => { if (ctx.state !== "running") ctx.resume().catch(() => {}); };
+try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (e) {}   // iOS 17+: 무음 스위치 무시·백그라운드 재생용
+function revive() {                                       // 화면을 다시 켜거나 앱으로 돌아왔을 때
+  resume();
+  if (playing) { const d = A(); if (d.el.paused && d.item) d.el.play().catch(() => {}); }
+}
+ctx.addEventListener("statechange", () => { if (ctx.state !== "running" && playing && document.visibilityState === "visible") revive(); });
+addEventListener("pageshow", revive);
+addEventListener("focus", revive);      // 브라우저는 첫 클릭 전엔 소리를 막음
 ["pointerdown", "keydown"].forEach(t => addEventListener(t, resume, { capture: true }));
 
 function makeDeck() {
@@ -496,8 +511,37 @@ function prev() {
   if (playing && d.item && d.el.currentTime - (d.item.start || 0) > 5) { crossTo(cur, 2); return; }   // 5초 넘게 들었으면 이 곡 처음으로
   if (cur > 0) crossTo(cur - 1);
 }
+const MS = "mediaSession" in navigator ? navigator.mediaSession : null;
+function msMeta() {
+  if (!MS) return;
+  const it = items()[cur];
+  try {
+    MS.metadata = new MediaMetadata({
+      title: it ? it.name : "Yoga Flow Player", artist: cls ? cls.name : "", album: "Yoga Flow Player",
+      artwork: [{ src: "icons/icon-192.png", sizes: "192x192", type: "image/png" }, { src: "icons/icon-512.png", sizes: "512x512", type: "image/png" }],
+    });
+    MS.playbackState = playing ? "playing" : "paused";
+  } catch (e) {}
+}
+let msLast = 0;
+function msPos() {                                        // 잠금 화면 진행 막대 (2초마다)
+  if (!MS || !MS.setPositionState || Date.now() - msLast < 2000) return;
+  msLast = Date.now();
+  const d = A(); if (!d.item || !d.el.duration) return;
+  try { MS.setPositionState({ duration: d.el.duration, position: Math.min(d.el.currentTime, d.el.duration), playbackRate: 1 }); } catch (e) {}
+}
+if (MS) {
+  const h = (a, f) => { try { MS.setActionHandler(a, f); } catch (e) {} };
+  h("play", () => resumeSoft());
+  h("pause", () => pauseSoft());
+  h("stop", () => fadeStop(3));
+  h("nexttrack", () => next());
+  h("previoustrack", () => prev());
+  h("seekto", e => { const d = A(); if (d.item && e.seekTime != null) d.el.currentTime = e.seekTime; });
+}
 function setPlaying(p) {
   playing = p;
+  setTimeout(msMeta, 0);
   $("playBtn").innerHTML = p ? ICON_PAUSE : ICON_PLAY;
   $("playBtn").title = p ? "일시정지 — 부드럽게 (Space)" : "재생 — 부드럽게 (Space)";
   wake(p);
@@ -521,13 +565,21 @@ function tick() {
     const showX = cls.auto && !it.loop && cur + 1 < items().length && len > cls.xf + 1;
     $("xfMark").hidden = !showX;
     if (showX) $("xfMark").style.left = (len - cls.xf) / len * 100 + "%";
-    if (playing && showX && !xfading && !busy && d.el.duration - d.el.currentTime <= cls.xf) crossTo(cur + 1);
   }
   analyser.getByteTimeDomainData(tbuf);
   let sum = 0; for (const b of tbuf) { const x = (b - 128) / 128; sum += x * x; }
   tick.s = (tick.s || 0) * 0.88 + Math.sqrt(sum / tbuf.length) * 0.12;
   $("ring").style.transform = `scale(${0.82 + Math.min(0.35, tick.s * 2.2)})`;
 }
+function watch() {                                       // 곡 끝나기 전 자동 전환 — 화면이 꺼져도 돌아감
+  const d = A(), it = d.item;
+  if (!playing || !it || !d.el.duration || xfading || busy) return;
+  const len = d.el.duration - (it.start || 0);
+  if (cls.auto && !it.loop && cur + 1 < items().length && len > cls.xf + 1 && d.el.duration - d.el.currentTime <= cls.xf) crossTo(cur + 1);
+  msPos();
+}
+setInterval(watch, 250);
+decks.forEach(d => d.el.addEventListener("timeupdate", watch));
 $("bar").addEventListener("click", e => {
   const d = A(); if (!d.item || !d.el.duration) return;
   const r = $("bar").getBoundingClientRect(), st = d.item.start || 0;
@@ -1104,6 +1156,7 @@ function render() {
   const nx = its[cur + 1];
   $("subline").textContent = it ? (nx ? `다음: ${nx.name}` : "마지막 곡") : (its.length ? `${cls.name} · ${its.length}곡` : "오른쪽에 MP3를 끌어다 놓으면 순서대로 재생됩니다");
   if (!it) { $("fill").style.width = "0"; $("tCur").textContent = "0:00"; $("tLeft").textContent = "-0:00"; $("xfMark").hidden = true; }
+  msMeta();
 }
 $("addBtn").onclick = $("drop").onclick = () => $("fileIn").click();
 $("fileIn").onchange = e => { addFiles(e.target.files); e.target.value = ""; };
@@ -1189,7 +1242,11 @@ let lock = null;
 async function wake(on) {                                // 재생 중엔 화면이 꺼지지 않게
   try { if (on && !lock && navigator.wakeLock) lock = await navigator.wakeLock.request("screen"); else if (!on && lock) { await lock.release(); lock = null; } } catch (e) { lock = null; }
 }
-document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && playing) { lock = null; wake(true); } });
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState !== "visible") return;
+  revive();
+  if (playing) { lock = null; wake(true); }
+});
 
 addEventListener("keydown", e => {
   if (e.target.matches("input[type=text], input[type=number], select") || e.ctrlKey || e.altKey || e.metaKey || document.querySelector("dialog[open]")) return;
@@ -1207,6 +1264,8 @@ addEventListener("keydown", e => {
 
 // ================= 시작 =================
 (async () => {
+  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js").catch(() => {});
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}   // 브라우저가 곡을 지우지 않게 요청
   db = await openDB();
   classes = (await allClasses()) || [];
   classes.sort((a, b) => (a.created || 0) - (b.created || 0));
