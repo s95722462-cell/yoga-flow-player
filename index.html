@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yoga Flow Player</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%235eead4'/%3E%3Cpath d='M32 14c6 8 6 16 0 24-6-8-6-16 0-24zM14 30c9 0 15 5 18 12-9 1-15-4-18-12zm36 0c-3 8-9 13-18 12 3-7 9-12 18-12z' fill='%230f2a2e'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #0e1417; --card: rgba(255,255,255,.045); --line: rgba(255,255,255,.08);
+    --text: #e8efe9; --dim: #8fa3a0; --accent: #5eead4; --accent2: #a7f3d0;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    font-family: "Pretendard", "Malgun Gothic", "Segoe UI", sans-serif; color: var(--text);
+    background: radial-gradient(900px 600px at 0% 0%, #134e4a55, transparent 60%),
+                radial-gradient(800px 600px at 100% 100%, #78350f33, transparent 60%), var(--bg);
+  }
+  button { font: inherit; color: inherit; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 18px 16px 40px; }
+
+  /* 머리 */
+  header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+  .logo { display: flex; align-items: center; gap: 10px; margin-right: auto; }
+  .logo svg { width: 34px; height: 34px; }
+  .logo b { font-size: 18px; letter-spacing: -.3px; }
+  .logo small { display: block; color: var(--dim); font-size: 12px; font-weight: 400; }
+  .chip { display: flex; align-items: center; gap: 6px; padding: 6px 8px 6px 12px; border-radius: 12px; background: var(--card); border: 1px solid var(--line); }
+  select, input[type=number], input[type=text] {
+    background: #0b1113; color: var(--text); border: 1px solid var(--line); border-radius: 8px; height: 32px; padding: 0 8px; font: inherit; font-size: 14px;
+  }
+  select { cursor: pointer; }
+  .ibtn {
+    height: 32px; min-width: 32px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line); background: #ffffff0a;
+    cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: background .15s;
+  }
+  .ibtn:hover { background: #ffffff18; }
+  .ibtn.on { background: #5eead422; border-color: #5eead466; color: var(--accent2); }
+  .ibtn svg { width: 16px; height: 16px; }
+
+  .grid { display: grid; grid-template-columns: 1.25fr 1fr; gap: 16px; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 18px; backdrop-filter: blur(12px); }
+  .card h3 { margin: 0 0 12px; font-size: 14px; font-weight: 600; color: var(--dim); letter-spacing: .2px; display: flex; align-items: center; gap: 8px; }
+  .card h3 .sp { flex: 1; }
+
+  /* 지금 재생 */
+  .now { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 14px; padding: 26px 22px; }
+  .orb { position: relative; width: 190px; height: 190px; display: grid; place-items: center; }
+  .orb .ring {
+    position: absolute; inset: 0; border-radius: 50%;
+    background: radial-gradient(circle at 50% 45%, #5eead455, #0f766e22 55%, transparent 70%);
+    transition: transform .12s linear; filter: blur(2px);
+  }
+  .orb .ring2 { position: absolute; inset: 22px; border-radius: 50%; border: 1px solid #5eead433; }
+  .orb .core {
+    position: relative; width: 112px; height: 112px; border-radius: 50%; display: grid; place-items: center;
+    background: linear-gradient(145deg, #134e4a, #0b2b2a); box-shadow: inset 0 2px 0 #ffffff14, 0 12px 30px -10px #000;
+  }
+  .orb .core span { font-size: 12px; color: var(--accent2); }
+  .orb .core b { display: block; font-size: 26px; font-weight: 600; color: #fff; font-variant-numeric: tabular-nums; }
+  .title { font-size: 21px; font-weight: 600; letter-spacing: -.3px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sub { color: var(--dim); font-size: 13px; margin-top: -8px; }
+  .prog { width: 100%; }
+  .bar { position: relative; height: 8px; border-radius: 8px; background: #ffffff14; cursor: pointer; }
+  .bar .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 8px; background: linear-gradient(90deg, #14b8a6, var(--accent)); }
+  .bar .xf { position: absolute; top: -4px; bottom: -4px; border-left: 2px dashed #fbbf77aa; }
+  .times { display: flex; justify-content: space-between; font-size: 12px; color: var(--dim); margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .ctrl { display: flex; align-items: center; justify-content: center; gap: 14px; }
+  .cbtn {
+    width: 58px; height: 58px; border-radius: 50%; border: 1px solid var(--line); background: #ffffff0c; cursor: pointer;
+    display: grid; place-items: center; transition: transform .1s, background .15s;
+  }
+  .cbtn:hover { background: #ffffff1a; }
+  .cbtn:active { transform: scale(.95); }
+  .cbtn svg { width: 24px; height: 24px; }
+  .cbtn.big { width: 82px; height: 82px; border: none; background: linear-gradient(145deg, #2dd4bf, #0d9488); color: #062b28; box-shadow: 0 12px 30px -10px #14b8a6aa; }
+  .cbtn.big svg { width: 34px; height: 34px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  .abtn {
+    display: flex; align-items: center; gap: 8px; padding: 11px 16px; border-radius: 14px; border: 1px solid var(--line);
+    background: #ffffff0a; cursor: pointer; font-size: 14px; font-weight: 500; transition: background .15s;
+  }
+  .abtn:hover { background: #ffffff18; }
+  .abtn svg { width: 18px; height: 18px; }
+  .abtn.next { background: #5eead41a; border-color: #5eead455; color: var(--accent2); }
+  .abtn.bell { background: #fbbf771a; border-color: #fbbf7755; color: #fde2bd; }
+  .vol { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 360px; color: var(--dim); font-size: 12px; }
+  .vol svg { width: 18px; height: 18px; flex: none; }
+  input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 5px; border-radius: 5px; background: #ffffff1c; outline: none; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); cursor: pointer; box-shadow: 0 0 0 4px #5eead422; }
+
+  /* 곡 목록 */
+  .opts { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; font-size: 13px; color: var(--dim); margin-bottom: 12px; }
+  .opts label { display: flex; align-items: center; gap: 6px; }
+  .opts input[type=number] { width: 62px; }
+  .switch { position: relative; width: 36px; height: 20px; flex: none; display: inline-block; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .switch span { position: absolute; inset: 0; border-radius: 20px; background: #ffffff22; cursor: pointer; transition: .2s; }
+  .switch span::after { content: ""; position: absolute; left: 3px; top: 3px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: .2s; }
+  .switch input:checked + span { background: #14b8a6; }
+  .switch input:checked + span::after { transform: translateX(16px); }
+  .queue { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 470px; overflow: auto; }
+  .queue li {
+    display: grid; grid-template-columns: 22px 26px 1fr auto; align-items: center; gap: 8px; padding: 9px 10px; border-radius: 12px;
+    background: #ffffff06; border: 1px solid transparent; cursor: pointer; transition: background .15s;
+  }
+  .queue li:hover { background: #ffffff0f; }
+  .queue li.cur { background: #5eead414; border-color: #5eead444; }
+  .queue li.dragging { opacity: .4; }
+  .queue .grip { color: #ffffff44; cursor: grab; text-align: center; user-select: none; }
+  .queue .no { width: 26px; height: 26px; border-radius: 8px; background: #ffffff10; display: grid; place-items: center; font-size: 12px; }
+  .queue li.cur .no { background: var(--accent); color: #062b28; }
+  .queue .nm { min-width: 0; }
+  .queue .nm b { display: block; font-weight: 500; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .queue .nm small { color: var(--dim); font-size: 12px; }
+  .queue .tools { display: flex; gap: 4px; align-items: center; }
+  .queue .tools .ibtn { height: 28px; min-width: 28px; padding: 0 6px; opacity: .55; }
+  .queue li:hover .tools .ibtn, .queue .tools .ibtn.on { opacity: 1; }
+  .queue .edit { grid-column: 3 / -1; display: none; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--dim); padding-top: 6px; }
+  .queue li.open .edit { display: flex; }
+  .queue .edit label { display: flex; align-items: center; gap: 6px; }
+  .queue .edit input[type=range] { width: 110px; }
+  .queue .edit input[type=number] { width: 64px; height: 28px; }
+  .drop {
+    margin-top: 10px; border: 1.5px dashed #ffffff26; border-radius: 14px; padding: 16px; text-align: center; color: var(--dim);
+    font-size: 13px; cursor: pointer; transition: .15s;
+  }
+  .drop:hover, .drop.over { border-color: var(--accent); color: var(--accent2); background: #5eead40d; }
+  .total { font-size: 12px; color: var(--dim); font-weight: 400; }
+
+  /* 아래 패널 */
+  .tools3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 16px; }
+  @media (max-width: 900px) { .tools3 { grid-template-columns: 1fr; } }
+  .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--dim); }
+  .row + .row { margin-top: 10px; }
+  .big-t { font-size: 34px; font-weight: 600; color: #fff; font-variant-numeric: tabular-nums; letter-spacing: -.5px; }
+  .muted { color: var(--dim); font-size: 12px; }
+  .tools3.two { grid-template-columns: 1fr 1fr; }
+  @media (max-width: 900px) { .tools3.two { grid-template-columns: 1fr; } }
+  .amb { margin-top: 16px; }
+  .amb-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; font-size: 13px; color: var(--dim); }
+  .amb-head h3 { margin: 0 8px 0 0; }
+  .amb-head .sp { flex: 1; }
+  .amb-head input[type=range] { width: 120px; }
+  .mixes { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .mix {
+    display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px; border: 1px solid var(--line);
+    background: #ffffff08; cursor: pointer; font-size: 13px; transition: background .15s, border-color .15s;
+  }
+  .mix:hover { background: #ffffff14; }
+  .mix.on { background: #fbbf7722; border-color: #fbbf7777; color: #fde2bd; }
+  .mix .x { margin-left: 2px; opacity: .5; font-size: 12px; }
+  .mix .x:hover { opacity: 1; color: #fca5a5; }
+  .mix.save { border-style: dashed; color: var(--dim); }
+  .mix-label { font-size: 12px; color: var(--dim); margin: 0 0 8px; }
+  .amb-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+  .snd {
+    position: relative; text-align: left; padding: 11px 12px; border-radius: 14px; border: 1px solid var(--line);
+    background: #ffffff06; cursor: pointer; display: flex; flex-direction: column; gap: 6px; transition: background .15s, border-color .15s;
+  }
+  .snd:hover { background: #ffffff10; }
+  .snd .t { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+  .snd .t i { font-style: normal; font-size: 18px; width: 22px; text-align: center; }
+  .snd small { color: var(--dim); font-size: 11px; line-height: 1.35; }
+  .snd input[type=range] { display: none; height: 4px; }
+  .snd.on { background: #5eead414; border-color: #5eead455; }
+  .snd.on input[type=range] { display: block; }
+  .snd.on::after { content: ""; position: absolute; right: 10px; top: 12px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  .amb.off .snd.on { opacity: .45; }
+  .sleep-left { color: var(--warm, #fbbf77); font-variant-numeric: tabular-nums; }
+  .amb-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px); padding: 10px 16px; border-radius: 12px;
+    background: #0b1113ee; border: 1px solid var(--line); font-size: 14px; opacity: 0; transition: .25s; pointer-events: none; z-index: 10;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%); }
+  kbd { font: inherit; font-size: 11px; padding: 1px 6px; border-radius: 5px; border: 1px solid #ffffff22; background: #ffffff0d; color: #c9d6d3; }
+  .keys { margin-top: 18px; text-align: center; font-size: 12px; color: var(--dim); line-height: 2; }
+  dialog { background: #121b1f; color: var(--text); border: 1px solid var(--line); border-radius: 16px; padding: 20px; width: min(420px, 90vw); }
+  dialog::backdrop { background: #000a; }
+  dialog h4 { margin: 0 0 12px; font-size: 16px; }
+  dialog input { width: 100%; }
+  dialog .btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+  .help { color: var(--dim); font-size: 13px; line-height: 1.7; }
+  .help b { color: var(--text); }
+
+  /* 수업 모드 (전체 화면, 큰 버튼) */
+  body.class-mode .grid { grid-template-columns: 1fr; }
+  body.class-mode .side-queue, body.class-mode .amb, body.class-mode .keys { display: none; }
+  body.class-mode .orb { width: 260px; height: 260px; }
+  body.class-mode .orb .core { width: 150px; height: 150px; }
+  body.class-mode .title { font-size: 28px; }
+  body.class-mode .cbtn.big { width: 110px; height: 110px; }
+  body.class-mode .abtn { padding: 16px 22px; font-size: 17px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">
+      <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="#5eead4"/><path d="M32 14c6 8 6 16 0 24-6-8-6-16 0-24zM14 30c9 0 15 5 18 12-9 1-15-4-18-12zm36 0c-3 8-9 13-18 12 3-7 9-12 18-12z" fill="#0f2a2e"/></svg>
+      <div><b>Yoga Flow Player</b><small>요가 수업 음악 전환 플레이어</small></div>
+    </div>
+    <div class="chip">
+      <span class="muted">수업</span>
+      <select id="classSel" title="수업 선택"></select>
+      <button class="ibtn" id="classNew" title="새 수업">＋</button>
+      <button class="ibtn" id="classRen" title="이름 바꾸기">✎</button>
+      <button class="ibtn" id="classDup" title="복제">⧉</button>
+      <button class="ibtn" id="classDel" title="수업 삭제">🗑</button>
+    </div>
+    <button class="ibtn" id="modeBtn" title="수업 모드 — 큰 버튼 전체 화면 (Z)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>수업 모드</button>
+    <button class="ibtn" id="helpBtn" title="사용법">?</button>
+  </header>
+
+  <div class="grid">
+    <section class="card now">
+      <div class="orb"><div class="ring" id="ring"></div><div class="ring2"></div>
+        <div class="core"><div><span>수업 경과</span><b id="classTime">00:00</b></div></div></div>
+      <div class="title" id="title">곡을 추가해 수업을 준비하세요</div>
+      <div class="sub" id="subline">오른쪽에 MP3를 끌어다 놓으면 순서대로 재생됩니다</div>
+      <div class="prog">
+        <div class="bar" id="bar"><div class="fill" id="fill"></div><div class="xf" id="xfMark" hidden title="이 지점부터 다음 곡으로 넘어감"></div></div>
+        <div class="times"><span id="tCur">0:00</span><span id="tLeft">-0:00</span></div>
+      </div>
+      <div class="ctrl">
+        <button class="cbtn" id="prevBtn" title="이전 곡 (←)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 6h2v12H7zM19 6v12l-9-6z"/></svg></button>
+        <button class="cbtn big" id="playBtn" title="재생 / 일시정지 — 부드럽게 (Space)"></button>
+        <button class="cbtn" id="nextBtn" title="다음 곡 — 부드럽게 넘김 (→)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M15 6h2v12h-2zM5 6v12l9-6z"/></svg></button>
+      </div>
+      <div class="actions">
+        <button class="abtn next" id="xfBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17c4 0 6-10 10-10h8M3 7c4 0 6 10 10 10h8"/><path d="M18 4l3 3-3 3M18 14l3 3-3 3"/></svg>다음 곡으로 전환 <kbd>N</kbd></button>
+        <button class="abtn" id="fadeBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6c6 0 12 6 18 12M3 18h18"/></svg>서서히 끄기 <kbd>F</kbd></button>
+        <button class="abtn bell" id="bellBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14c0-5 3.6-8 8-8s8 3 8 8"/><path d="M2 14h20M8 18h8"/><circle cx="12" cy="4" r="1.5"/></svg>싱잉볼 <kbd>B</kbd></button>
+      </div>
+      <div class="vol">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg>
+        <input type="range" id="master" min="0" max="1" step="0.01" value="0.9" title="전체 볼륨 (↑↓)">
+        <span id="masterLbl" style="width:36px;text-align:right">90%</span>
+      </div>
+    </section>
+
+    <section class="card side-queue">
+      <h3>곡 순서 <span class="total" id="total"></span><span class="sp"></span>
+        <button class="ibtn" id="addBtn">＋ 곡 추가</button></h3>
+      <div class="opts">
+        <label>전환 시간 <input type="number" id="xfSec" min="0" max="30" step="1"> 초</label>
+        <label class="switch" title="곡이 끝나기 전에 자동으로 다음 곡으로 넘어감"><input type="checkbox" id="autoNext"><span></span></label><span>자동으로 다음 곡</span>
+      </div>
+      <ul class="queue" id="queue"></ul>
+      <div class="drop" id="drop">MP3를 여기로 끌어다 놓거나 눌러서 고르세요 · 순서는 ☰ 를 끌어서 바꿉니다</div>
+      <input type="file" id="fileIn" accept="audio/*,.mp3,.m4a,.wav,.ogg,.flac" multiple hidden>
+    </section>
+  </div>
+
+  <div class="tools3 two">
+    <section class="card">
+      <h3>사바아사나 타이머</h3>
+      <div class="big-t" id="savT">05:00</div>
+      <div class="row" style="margin-top:8px">
+        <input type="number" id="savMin" min="1" max="60" value="5" style="width:64px"> 분
+        <button class="ibtn" id="savBtn"><span id="savLbl">시작</span> <kbd>S</kbd></button>
+        <button class="ibtn" id="savReset">초기화</button>
+      </div>
+      <div class="row"><label class="switch"><input type="checkbox" id="savBell" checked><span></span></label> 끝나면 싱잉볼 3번</div>
+      <div class="row"><label class="switch"><input type="checkbox" id="savFade"><span></span></label> 타이머 동안 음악 볼륨 낮추기 (60%)</div>
+    </section>
+
+    <section class="card">
+      <h3>싱잉볼 · 수업 시간</h3>
+      <div class="row">
+        <select id="bellType">
+          <option value="bowl">싱잉볼 (낮고 긴 울림)</option>
+          <option value="chime">차임 (맑은 소리)</option>
+          <option value="tingsha">팅샤 (높고 짧게)</option>
+        </select>
+        <button class="ibtn" id="bellTest">들어보기</button>
+      </div>
+      <div class="row"><label class="switch"><input type="checkbox" id="duck" checked><span></span></label> 종이 울릴 때 음악 살짝 낮추기</div>
+      <div class="row"><span>수업 경과 시간</span><button class="ibtn" id="classReset">0으로</button></div>
+    </section>
+  </div>
+
+  <section class="card amb" id="ambCard">
+    <div class="amb-head">
+      <h3>배경 소리</h3>
+      <label class="switch" title="배경 소리 전체 켜기·끄기 (A)"><input type="checkbox" id="ambOn"><span></span></label>
+      <span>전체 볼륨</span><input type="range" id="ambVol" min="0" max="1" step="0.01" value="0.6">
+      <span class="sp"></span>
+      <span>끄기 예약</span>
+      <select id="sleepSel" title="정한 시간이 지나면 음악과 배경 소리를 30초 동안 서서히 끔">
+        <option value="0">없음</option><option value="10">10분 뒤</option><option value="20">20분 뒤</option>
+        <option value="30">30분 뒤</option><option value="45">45분 뒤</option><option value="60">60분 뒤</option><option value="90">90분 뒤</option>
+      </select>
+      <span class="sleep-left" id="sleepLeft"></span>
+    </div>
+    <p class="mix-label">믹스 — 누르면 그 조합으로 바뀝니다 (지금 소리는 서서히 바뀜)</p>
+    <div class="mixes" id="mixes"></div>
+    <div class="amb-grid" id="ambGrid"></div>
+    <p class="muted" style="margin:12px 0 0">여러 소리를 함께 켜서 섞을 수 있습니다 (예: 빗소리 + 풍경 + 432Hz). 음악 아래에 계속 깔리고 곡이 바뀌어도 끊기지 않습니다. 파일 없이 이 프로그램이 직접 만드는 소리입니다.</p>
+    <input type="file" id="ambIn" accept="audio/*" hidden>
+  </section>
+
+  <div class="keys">
+    <kbd>Space</kbd> 재생·멈춤 (부드럽게) &nbsp; <kbd>N</kbd>/<kbd>→</kbd> 다음 곡 전환 &nbsp; <kbd>←</kbd> 이전 곡 &nbsp; <kbd>F</kbd> 서서히 끄기 &nbsp;
+    <kbd>B</kbd> 싱잉볼 &nbsp; <kbd>S</kbd> 사바아사나 타이머 &nbsp; <kbd>A</kbd> 배경 소리 &nbsp; <kbd>↑</kbd><kbd>↓</kbd> 볼륨 &nbsp; <kbd>Z</kbd> 수업 모드
+  </div>
+</div>
+
+<dialog id="dlg"><h4 id="dlgT"></h4><input type="text" id="dlgIn"><div class="btns"><button class="ibtn" id="dlgNo">취소</button><button class="ibtn on" id="dlgOk">확인</button></div></dialog>
+<dialog id="helpDlg">
+  <h4>사용법</h4>
+  <div class="help">
+    <p><b>1. 수업 준비</b> — 위에서 수업을 만들고(예: 월요일 빈야사), 오른쪽에 곡을 끌어다 놓습니다. 곡과 순서는 이 PC 브라우저에 저장되어 다음 수업에 그대로 열립니다.</p>
+    <p><b>2. 수업 중</b> — <b>다음 곡으로 전환(N)</b>을 누르면 지금 곡이 작아지면서 다음 곡이 커집니다. 전환 시간은 오른쪽에서 정합니다(기본 8초).</p>
+    <p><b>3. 자연스럽게 시작·멈춤</b> — 재생·멈춤도 1~2초 동안 부드럽게 바뀝니다. 수업을 끝낼 땐 <b>서서히 끄기(F)</b>.</p>
+    <p><b>4. 곡마다 설정</b> — 곡의 ⚙ 에서 볼륨(곡마다 소리 크기 맞추기)과 시작 위치(앞부분 건너뛰기), ↻ 로 반복(사바아사나 동안 한 곡 계속)을 정합니다.</p>
+    <p><b>5. 사바아사나</b> — 타이머를 시작하면 끝날 때 싱잉볼이 3번 울립니다.</p>
+    <p class="muted">팁: 수업 모드(Z)는 버튼이 커져서 매트 위에서 태블릿·노트북으로 누르기 좋습니다. 재생 중엔 화면이 꺼지지 않게 합니다.</p>
+  </div>
+  <div class="btns"><button class="ibtn on" id="helpOk">확인</button></div>
+</dialog>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+const $ = id => document.getElementById(id);
+const ICON_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg>';
+const ICON_PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6.5" y="5" width="4" height="14" rx="1.2"/><rect x="13.5" y="5" width="4" height="14" rx="1.2"/></svg>';
+const fmt = s => { s = Math.max(0, s || 0); const m = Math.floor(s / 60), x = Math.floor(s % 60); return `${m}:${String(x).padStart(2, "0")}`; };
+const fmt2 = s => { s = Math.max(0, Math.ceil(s)); return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`; };
+const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+function toast(t) { const el = $("toast"); el.textContent = t; el.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("show"), 1800); }
+const ls = { get(k, d) { try { const v = localStorage.getItem("yfp_" + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+             set(k, v) { try { localStorage.setItem("yfp_" + k, JSON.stringify(v)); } catch (e) {} } };
+
+// ================= 저장소 (IndexedDB: 음원 파일 + 수업 목록) =================
+let db = null;
+const memFiles = new Map(), memClasses = new Map();
+function openDB() {
+  return new Promise(res => {
+    try {
+      const r = indexedDB.open("yoga-flow-player", 1);
+      r.onupgradeneeded = () => { r.result.createObjectStore("files", { keyPath: "id" }); r.result.createObjectStore("classes", { keyPath: "id" }); };
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => res(null);
+    } catch (e) { res(null); }
+  });
+}
+function req(store, mode, fn) {
+  return new Promise(res => {
+    try {
+      const t = db.transaction(store, mode), r = fn(t.objectStore(store));
+      t.oncomplete = () => res(r.result);
+      t.onerror = t.onabort = () => res(null);
+    } catch (e) { res(null); }
+  });
+}
+const putFile = f => db ? req("files", "readwrite", s => s.put(f)) : (memFiles.set(f.id, f), Promise.resolve());
+const getFile = id => db ? req("files", "readonly", s => s.get(id)) : Promise.resolve(memFiles.get(id));
+const delFile = id => db ? req("files", "readwrite", s => s.delete(id)) : (memFiles.delete(id), Promise.resolve());
+const putClass = c => db ? req("classes", "readwrite", s => s.put(JSON.parse(JSON.stringify(c)))) : (memClasses.set(c.id, c), Promise.resolve());
+const delClass = id => db ? req("classes", "readwrite", s => s.delete(id)) : (memClasses.delete(id), Promise.resolve());
+const allClasses = () => db ? req("classes", "readonly", s => s.getAll()) : Promise.resolve([...memClasses.values()]);
+
+// ================= 오디오 =================
+const AC = window.AudioContext || window.webkitAudioContext;
+const ctx = new AC();
+const master = ctx.createGain(), duckG = ctx.createGain(), musicBus = ctx.createGain(), ambG = ctx.createGain();
+const analyser = ctx.createAnalyser(); analyser.fftSize = 512;
+musicBus.connect(duckG); duckG.connect(master); ambG.connect(master); master.connect(analyser); analyser.connect(ctx.destination);
+ambG.gain.value = 0;
+const resume = () => { if (ctx.state !== "running") ctx.resume(); };      // 브라우저는 첫 클릭 전엔 소리를 막음
+["pointerdown", "keydown"].forEach(t => addEventListener(t, resume, { capture: true }));
+
+function makeDeck() {
+  const el = new Audio(); el.preload = "auto";
+  const g = ctx.createGain(); g.gain.value = 0;
+  ctx.createMediaElementSource(el).connect(g); g.connect(musicBus);
+  return { el, g, item: null, timer: null };
+}
+const decks = [makeDeck(), makeDeck()];                 // 두 데크를 번갈아 써서 겹쳐 넘김
+let ad = 0;
+const A = () => decks[ad];
+
+function ramp(param, to, sec, shape = "lin") {           // 부드러운 볼륨 변화 (같은 힘 곡선)
+  const now = ctx.currentTime, from = param.value;
+  param.cancelScheduledValues(now);
+  if (sec < 0.05) { param.setValueAtTime(to, now); return; }
+  const n = 64, curve = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const t = i / (n - 1);
+    const k = shape === "in" ? Math.sin(t * Math.PI / 2) : shape === "out" ? 1 - Math.cos(t * Math.PI / 2) : t;
+    curve[i] = from + (to - from) * k;
+  }
+  param.setValueCurveAtTime(curve, now, sec);
+}
+
+// ================= 상태 =================
+let classes = [], cls = null;
+let cur = -1, xfading = false, playing = false, busy = false;
+const urls = new Map();
+async function urlFor(fid) {
+  if (urls.has(fid)) return urls.get(fid);
+  const f = await getFile(fid);
+  if (!f) return null;
+  const u = URL.createObjectURL(f.blob); urls.set(fid, u); return u;
+}
+const items = () => (cls ? cls.items : []);
+const saveCls = () => cls ? putClass(cls) : Promise.resolve();
+
+// ================= 재생 =================
+async function loadInto(deck, idx) {
+  const it = items()[idx];
+  const u = await urlFor(it.fid);
+  if (!u) { toast("음원 파일을 찾을 수 없습니다: " + it.name); return false; }
+  deck.item = it;
+  deck.el.loop = !!it.loop;
+  if (deck.el.src !== u) deck.el.src = u;
+  await new Promise(r => { if (deck.el.readyState >= 1) r(); else { deck.el.addEventListener("loadedmetadata", r, { once: true }); deck.el.addEventListener("error", r, { once: true }); } });
+  deck.el.currentTime = it.start || 0;
+  return true;
+}
+async function startAt(idx, fadeSec) {                   // 멈춘 상태에서 시작
+  if (idx < 0 || idx >= items().length || busy) return;
+  busy = true; resume();
+  decks.forEach(d => { clearTimeout(d.timer); d.g.gain.cancelScheduledValues(ctx.currentTime); d.g.gain.value = 0; d.el.pause(); });
+  const d = A();
+  if (await loadInto(d, idx)) {
+    cur = idx;
+    await d.el.play().catch(() => {});
+    ramp(d.g.gain, d.item.vol ?? 1, fadeSec, "in");
+    setPlaying(true);
+  }
+  busy = false; render();
+}
+async function crossTo(idx, sec = cls.xf) {
+  if (idx < 0 || idx >= items().length || busy) return;
+  if (!playing) { await startAt(idx, 1.5); return; }
+  busy = true; resume();
+  const out = A(), inn = decks[1 - ad];
+  clearTimeout(inn.timer); clearTimeout(out.timer);
+  inn.g.gain.cancelScheduledValues(ctx.currentTime); inn.g.gain.value = 0;
+  if (await loadInto(inn, idx)) {
+    await inn.el.play().catch(() => {});
+    xfading = true;
+    ramp(out.g.gain, 0, sec, "out");
+    ramp(inn.g.gain, inn.item.vol ?? 1, sec, "in");
+    out.timer = setTimeout(() => out.el.pause(), sec * 1000 + 100);
+    clearTimeout(crossTo.t); crossTo.t = setTimeout(() => { xfading = false; }, sec * 1000 + 100);
+    ad = 1 - ad; cur = idx;
+    toast(`전환 → ${inn.item.name}`);
+  }
+  busy = false; render();
+}
+function pauseSoft() {
+  if (!playing) return;
+  decks.forEach(d => { ramp(d.g.gain, 0, 1.2, "out"); clearTimeout(d.timer); d.timer = setTimeout(() => d.el.pause(), 1250); });
+  xfading = false;
+  setPlaying(false);
+}
+async function resumeSoft() {
+  const d = A();
+  if (!d.item || d.el.ended || !d.el.src) { await startAt(Math.max(0, cur), 1.5); return; }
+  resume(); clearTimeout(d.timer);
+  await d.el.play().catch(() => {});
+  ramp(d.g.gain, d.item.vol ?? 1, 1.5, "in");
+  setPlaying(true);
+}
+function togglePlay() { if (!items().length) { toast("먼저 곡을 추가하세요"); return; } playing ? pauseSoft() : resumeSoft(); }
+function fadeStop(sec = 6) {
+  if (!playing) return;
+  decks.forEach(d => { ramp(d.g.gain, 0, sec, "out"); clearTimeout(d.timer); d.timer = setTimeout(() => d.el.pause(), sec * 1000 + 100); });
+  setPlaying(false);
+  toast(`${sec}초 동안 서서히 끕니다`);
+}
+function next() {
+  if (cur + 1 < items().length) crossTo(cur + 1);
+  else if (playing) { fadeStop(Math.max(3, cls.xf)); toast("마지막 곡이었습니다 — 서서히 끕니다"); }
+  else if (items().length) startAt(0, 1.5);
+}
+function prev() {
+  const d = A();
+  if (playing && d.item && d.el.currentTime - (d.item.start || 0) > 5) { crossTo(cur, 2); return; }   // 5초 넘게 들었으면 이 곡 처음으로
+  if (cur > 0) crossTo(cur - 1);
+}
+function setPlaying(p) {
+  playing = p;
+  $("playBtn").innerHTML = p ? ICON_PAUSE : ICON_PLAY;
+  $("playBtn").title = p ? "일시정지 — 부드럽게 (Space)" : "재생 — 부드럽게 (Space)";
+  wake(p);
+}
+decks.forEach(d => d.el.addEventListener("ended", () => {
+  if (d !== A()) return;
+  if (cls.auto && cur + 1 < items().length) crossTo(cur + 1, 1);
+  else { setPlaying(false); render(); }
+}));
+
+// 진행 표시 + 자동 전환 + 숨쉬는 원
+const tbuf = new Uint8Array(512);
+function tick() {
+  requestAnimationFrame(tick);
+  const d = A(), it = d.item;
+  if (it && d.el.duration) {
+    const st = it.start || 0, len = d.el.duration - st, pos = d.el.currentTime - st;
+    $("fill").style.width = Math.min(100, pos / len * 100) + "%";
+    $("tCur").textContent = fmt(pos);
+    $("tLeft").textContent = "-" + fmt(d.el.duration - d.el.currentTime);
+    const showX = cls.auto && !it.loop && cur + 1 < items().length && len > cls.xf + 1;
+    $("xfMark").hidden = !showX;
+    if (showX) $("xfMark").style.left = (len - cls.xf) / len * 100 + "%";
+    if (playing && showX && !xfading && !busy && d.el.duration - d.el.currentTime <= cls.xf) crossTo(cur + 1);
+  }
+  analyser.getByteTimeDomainData(tbuf);
+  let sum = 0; for (const b of tbuf) { const x = (b - 128) / 128; sum += x * x; }
+  tick.s = (tick.s || 0) * 0.88 + Math.sqrt(sum / tbuf.length) * 0.12;
+  $("ring").style.transform = `scale(${0.82 + Math.min(0.35, tick.s * 2.2)})`;
+}
+$("bar").addEventListener("click", e => {
+  const d = A(); if (!d.item || !d.el.duration) return;
+  const r = $("bar").getBoundingClientRect(), st = d.item.start || 0;
+  d.el.currentTime = st + (e.clientX - r.left) / r.width * (d.el.duration - st);
+});
+
+// ================= 수업 경과 시간 (음악이 나오는 동안만 셈) =================
+let classSec = 0, lastT = performance.now();
+setInterval(() => {
+  const now = performance.now();
+  if (playing) classSec += (now - lastT) / 1000;
+  lastT = now;
+  $("classTime").textContent = fmt2(classSec);
+}, 250);
+$("classReset").onclick = () => { classSec = 0; toast("수업 경과 시간을 0으로"); };
+
+// ================= 싱잉볼 (소리 파일 없이 합성) =================
+const BELLS = {
+  bowl:    { f: 196,  parts: [[1, 1, 30], [2.76, .5, 20], [5.4, .25, 11], [8.93, .12, 6]], beat: 1.8 },   // 약 30초 울림
+  chime:   { f: 523,  parts: [[1, 1, 5], [2.0, .35, 3], [3.0, .2, 2], [4.2, .1, 1.5]], beat: 0.8 },
+  tingsha: { f: 1318, parts: [[1, 1, 3.5], [2.7, .3, 2], [5.1, .12, 1]], beat: 3.5 },
+};
+function strike(dest, f, parts, beat, gain = 0.55, when = 0) {   // 종 한 번 치기: 배음마다 살짝 어긋난 두 음 → 울림(맥놀이)
+  const t0 = ctx.currentTime + when + 0.02;
+  const out = ctx.createGain(); out.gain.value = gain; out.connect(dest);
+  let longest = 0;
+  parts.forEach(([m, a, dec]) => {
+    longest = Math.max(longest, dec);
+    [0, beat].forEach(det => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = "sine"; o.frequency.value = f * m + det;
+      g.gain.setValueAtTime(0, t0);
+      g.gain.linearRampToValueAtTime(a * 0.5, t0 + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dec);
+      o.connect(g); g.connect(out); o.start(t0); o.stop(t0 + dec + 0.1);
+    });
+  });
+  setTimeout(() => out.disconnect(), (when + longest + 0.5) * 1000);
+}
+function bell(type = $("bellType").value, when = 0) {
+  resume();
+  const b = BELLS[type];
+  strike(master, b.f, b.parts, b.beat, 0.55, when);
+  if ($("duck").checked && playing) {                      // 종이 울리는 동안 음악 낮춤
+    const p = duckG.gain, n = ctx.currentTime + when;
+    p.cancelScheduledValues(n); p.setValueAtTime(p.value, n);
+    p.linearRampToValueAtTime(0.45, n + 0.3); p.setValueAtTime(0.45, n + 3); p.linearRampToValueAtTime(1, n + 5.5);
+  }
+}
+
+// ================= 사바아사나 타이머 =================
+let savLeft = ls.get("savMin", 5) * 60, savOn = false, savT0 = 0, savBase = 0;
+$("savMin").value = ls.get("savMin", 5);
+function savShow() { $("savT").textContent = fmt2(savLeft); $("savLbl").textContent = savOn ? "일시정지" : "시작"; $("savBtn").classList.toggle("on", savOn); }
+function savToggle() {
+  resume();
+  if (savOn) { savOn = false; savShow(); return; }
+  if (savLeft <= 0) savLeft = +$("savMin").value * 60;
+  savOn = true; savT0 = performance.now(); savBase = savLeft;
+  if ($("savFade").checked) ramp(musicBus.gain, 0.6, 4);
+  toast("사바아사나 타이머 시작");
+  savShow();
+}
+setInterval(() => {
+  if (!savOn) return;
+  savLeft = savBase - (performance.now() - savT0) / 1000;
+  if (savLeft <= 0) {
+    savLeft = 0; savOn = false;
+    if ($("savBell").checked) { bell(undefined, 0); bell(undefined, 4); bell(undefined, 8); }
+    if ($("savFade").checked) ramp(musicBus.gain, 1, 6);
+    toast("사바아사나 끝");
+  }
+  savShow();
+}, 200);
+$("savBtn").onclick = savToggle;
+$("savReset").onclick = () => { savOn = false; savLeft = +$("savMin").value * 60; ramp(musicBus.gain, 1, 2); savShow(); };
+$("savMin").onchange = () => { const m = Math.max(1, Math.min(60, +$("savMin").value || 5)); $("savMin").value = m; ls.set("savMin", m); if (!savOn) { savLeft = m * 60; savShow(); } };
+savShow();
+
+// ================= 배경 소리 (여러 층을 섞음 · 모두 합성) =================
+const rnd = (a, b) => a + Math.random() * (b - a);
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const rev = ctx.createConvolver();                       // 공간 울림 (새·물방울·종)
+rev.buffer = (() => {
+  const len = ctx.sampleRate * 4, b = ctx.createBuffer(2, len, ctx.sampleRate);
+  for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3); }
+  return b;
+})();
+rev.connect(ambG);
+
+function makeLoop(sec, fill) {                           // 이어 붙여도 티 안 나는 반복 소리 버퍼
+  const sr = ctx.sampleRate, n = Math.floor(sr * sec), x = sr;
+  const buf = ctx.createBuffer(2, n, sr);
+  for (let c = 0; c < 2; c++) {
+    const t = new Float32Array(n + x); fill(t, sr, c);
+    const d = buf.getChannelData(c);
+    d.set(t.subarray(0, n));
+    for (let i = 0; i < x; i++) { const k = i / x; d[i] = t[i] * k + t[n + i] * (1 - k); }
+  }
+  return buf;
+}
+const white = () => Math.random() * 2 - 1;
+const FILL = {
+  wind(t, sr, c) {
+    let l = 0;
+    for (let i = 0; i < t.length; i++) {
+      l = (l + 0.02 * white()) / 1.02;
+      const s = i / sr, g = 0.45 + 0.35 * Math.sin(2 * Math.PI * s / 7 + c) + 0.2 * Math.sin(2 * Math.PI * s / 3.1 + 2 * c);
+      t[i] = l * 3.2 * g;
+    }
+  },
+  ocean(t, sr, c) {
+    let l = 0;
+    for (let i = 0; i < t.length; i++) {
+      l = (l + 0.02 * white()) / 1.02;
+      const ph = (i / sr / 9 + c * 0.1) % 1;                      // 9초마다 밀려왔다 빠지는 파도
+      t[i] = l * 3.5 * (0.18 + 0.82 * Math.pow(Math.sin(Math.PI * ph), 3));
+    }
+  },
+  rain(t, sr) {
+    let p = 0, lp = 0, env = 0, lp2 = 0;
+    for (let i = 0; i < t.length; i++) {
+      const w = white(), h = w - p; p = w; lp += (h - lp) * 0.45; lp2 += (white() - lp2) * 0.05;
+      if (Math.random() < 30 / sr) env = rnd(0.15, 0.6);            // 굵은 빗방울
+      env *= 0.994;
+      t[i] = lp * 0.16 + lp2 * 0.25 + white() * env * 0.5;
+    }
+  },
+  stream(t, sr, c) {
+    let a = 0, b = 0, bt = 0, bf = 0, ph = 0;
+    for (let i = 0; i < t.length; i++) {
+      const w = white(); a += (w - a) * 0.25; b += (w - b) * 0.03;
+      const s = i / sr, m = 0.55 + 0.25 * Math.sin(s * 1.7 + c) * Math.sin(s * 0.53) + 0.2 * Math.sin(s * 3.3 + c * 2);
+      let v = (a - b) * 0.9 * m;
+      if (bt <= 0 && Math.random() < 7 / sr) { bt = Math.floor(sr * rnd(0.015, 0.04)); bf = rnd(350, 900); }   // 졸졸 거품
+      if (bt > 0) { ph += 2 * Math.PI * bf / sr; bf *= 1.0006; v += Math.sin(ph) * 0.18 * (bt / (sr * 0.04)); bt--; }
+      t[i] = v;
+    }
+  },
+  brook(t, sr, c, o) {                                        // 개울: 초당 수십~수백 개의 작은 거품 + 고르게 흐르는 물소리
+    const bub = [], lf = Math.log(o.fmin), hf = Math.log(o.fmax);
+    let p = 0, hp = 0, fl = 0;
+    for (let i = 0; i < t.length; i++) {
+      if (Math.random() < o.rate / sr) {
+        const f = Math.exp(lf + Math.random() * (hf - lf));
+        bub.push({ f, ph: 0, a: o.amp * Math.pow(Math.random(), 1.6) * (900 / f) ** 0.5, d: Math.exp(-1 / (sr * rnd(0.003, 0.014))), rise: 1 + rnd(0.6, 2.2) / sr * 8 });
+      }
+      let v = 0;
+      for (let k = bub.length - 1; k >= 0; k--) {
+        const b = bub[k]; b.ph += 2 * Math.PI * b.f / sr; b.f *= b.rise; v += Math.sin(b.ph) * b.a; b.a *= b.d;
+        if (b.a < 4e-4) { bub[k] = bub[bub.length - 1]; bub.pop(); }
+      }
+      const w = white(); hp = 0.97 * (hp + w - p); p = w;          // 쉬 하는 물 흐름 (높은 소리만)
+      if (i % 64 === 0) fl = 0.75 + 0.25 * Math.random();          // 빠르게 반짝이는 흐름 (출렁임 아님)
+      t[i] = v + hp * o.hiss * fl;
+    }
+  },
+  tent(t, sr) {                                               // 텐트 천에 떨어지는 빗방울: 낮게 '톡' 울리는 천 + 멀리 빗소리
+    const modes = [[150, .9986], [230, .9982], [320, .9978], [470, .997]].map(([f, r]) => ({ r, c: 2 * r * Math.cos(2 * Math.PI * f / sr), s: Math.sin(2 * Math.PI * f / sr), y1: 0, y2: 0 }));
+    let lp = 0, lp2 = 0, drip = 0;
+    for (let i = 0; i < t.length; i++) {
+      lp += (white() - lp) * 0.08; lp2 += (lp - lp2) * 0.3;
+      let x = 0;
+      if (Math.random() < 22 / sr) x = rnd(0.2, 1);
+      if (Math.random() < 0.25 / sr) drip = 1;                   // 가장자리에서 굵게 떨어지는 물
+      let v = lp2 * 0.35;
+      for (const m of modes) {
+        const ex = Math.random() < 0.35 ? x : x * 0.3;
+        const y = m.c * m.y1 - m.r * m.r * m.y2 + ex * 0.3 * m.s; m.y2 = m.y1; m.y1 = y; v += y;
+      }
+      if (drip > 0.001) { v += white() * drip * 0.25; drip *= 0.9985; }
+      t[i] = v;
+    }
+  },
+  roof(t, sr) {                                               // 함석지붕 빗소리: 쇳소리 '팅' + 촘촘한 빗발 + 홈통 물
+    const modes = [900, 1350, 1870, 2450, 3100].map(f => { const r = 0.9975; return { r, c: 2 * r * Math.cos(2 * Math.PI * f / sr), s: Math.sin(2 * Math.PI * f / sr), y1: 0, y2: 0 }; });
+    let p = 0, lp = 0, gut = 0, gp = 0;
+    for (let i = 0; i < t.length; i++) {
+      const w = white(), h = w - p; p = w; lp += (h - lp) * 0.35;
+      let v = lp * 0.22;
+      if (Math.random() < 45 / sr) { const m = pick(modes); m.y1 += rnd(0.1, 0.45) * m.s; }
+      for (const m of modes) { const y = m.c * m.y1 - m.r * m.r * m.y2; m.y2 = m.y1; m.y1 = y; v += y * 0.6; }
+      gut += (white() - gut) * 0.02; gp = 0.5 + 0.5 * Math.sin(i / sr * 2.1);   // 홈통으로 흐르는 물
+      v += gut * 0.6 * gp;
+      t[i] = v;
+    }
+  },
+  fire(t, sr) {
+    let l = 0, env = 0, lp = 0;
+    for (let i = 0; i < t.length; i++) {
+      l = (l + 0.02 * white()) / 1.02; lp += (l - lp) * 0.2;
+      if (Math.random() < (Math.random() < 0.3 ? 40 : 6) / sr) env = rnd(0.2, 1);   // 타닥 (가끔 몰려서)
+      env *= 0.96;
+      t[i] = lp * 2.6 + white() * env * 0.45;
+    }
+  },
+};
+function loopLayer(kind, sec, lpHz) {
+  return out => {
+    const src = ctx.createBufferSource(); src.buffer = makeLoop(sec, FILL[kind]); src.loop = true;
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = lpHz;
+    src.connect(lp); lp.connect(out); src.start();
+    return () => { try { src.stop(); } catch (e) {} };
+  };
+}
+function every(minS, maxS, fn, first = [0.3, 2]) {        // 무작위 간격으로 반복
+  let alive = true, tid;
+  const go = () => { if (!alive) return; try { fn(); } catch (e) {} tid = setTimeout(go, rnd(minS, maxS) * 1000); };
+  tid = setTimeout(go, rnd(first[0], first[1]) * 1000);
+  return () => { alive = false; clearTimeout(tid); };
+}
+function blip(out, { f, f2, dur, a = 0.3, at = 0, pan = 0, type = "sine", vib = 0 }) {
+  const t0 = ctx.currentTime + at, o = ctx.createOscillator(), g = ctx.createGain(), p = ctx.createStereoPanner();
+  o.type = type; o.frequency.setValueAtTime(f, t0);
+  if (f2) o.frequency.exponentialRampToValueAtTime(f2, t0 + dur);
+  if (vib) { const l = ctx.createOscillator(), lg = ctx.createGain(); l.frequency.value = rnd(25, 45); lg.gain.value = vib; l.connect(lg); lg.connect(o.frequency); l.start(t0); l.stop(t0 + dur + 0.05); }
+  g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(a, t0 + Math.min(0.01, dur / 4)); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  p.pan.value = pan; o.connect(g); g.connect(p); p.connect(out); o.start(t0); o.stop(t0 + dur + 0.05);
+}
+function toneLayer(base, mix) {                           // 432Hz·528Hz 명상음 (잔잔한 화음 + 느린 일렁임)
+  return out => {
+    const g = ctx.createGain(); g.gain.value = 0.5;
+    const lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.frequency.value = 0.08; lg.gain.value = 0.18;
+    lfo.connect(lg); lg.connect(g.gain); lfo.start();
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 1800;
+    g.connect(lp); lp.connect(out);
+    const os = mix.map(([m, a, det]) => {
+      const o = ctx.createOscillator(), og = ctx.createGain(), p = ctx.createStereoPanner();
+      o.frequency.value = base * m + (det || 0); og.gain.value = a; p.pan.value = det ? 0.5 : -0.2;
+      o.connect(og); og.connect(p); p.connect(g); o.start(); return o;
+    });
+    return () => { [lfo, ...os].forEach(o => { try { o.stop(); } catch (e) {} }); };
+  };
+}
+const BROOK = [];
+const EMILLE = [[1, 1, 45], [2.63, .8, 32], [3.25, .3, 22], [4.15, .35, 18], [5.54, .2, 12], [7.35, .14, 9], [9.0, .1, 7]];   // 성덕대왕신종 배음 비 (근사)
+const SOUNDS = [
+  { id: "rain",    icon: "🌧", name: "빗소리",        desc: "창밖에 내리는 비",           vol: .55, rev: 0,   make: loopLayer("rain", 12, 7000) },
+  { id: "ocean",   icon: "🌊", name: "잔잔한 파도",   desc: "9초마다 밀려오는 파도",       vol: .5,  rev: 0,   make: loopLayer("ocean", 18, 900) },
+  { id: "stream",  icon: "💧", name: "시냇물",        desc: "졸졸 흐르는 개울 (가까이·멀리)", vol: .5, rev: 0,
+    make: out => {
+      const lrev = ctx.createConvolver(); lrev.buffer = rev.buffer; lrev.connect(out);
+      const stops = [];
+      // 거리별: 거품 수/초, 거품 음높이, 크기, 흐름 소리, 밝기(Hz), 볼륨, 좌우, 울림
+      [
+        { rate: 70,  fmin: 450, fmax: 2600, amp: .32, hiss: .03, hz: 9000, g: .6,  pan: -0.45, wet: .04 },   // 바로 앞 (또렷)
+        { rate: 220, fmin: 600, fmax: 3200, amp: .14, hiss: .05, hz: 4500, g: .45, pan: 0.45,  wet: .25 },  // 조금 떨어진 곳
+        { rate: 380, fmin: 700, fmax: 3800, amp: .07, hiss: .08, hz: 2200, g: .4,  pan: 0,     wet: .8 },   // 멀리 (흐리고 울림)
+      ].forEach((o, k) => {
+        const src = ctx.createBufferSource(); src.buffer = BROOK[k] || (BROOK[k] = makeLoop(8 + k, (t, sr, c) => FILL.brook(t, sr, c, o)));   // 한 번 만들면 다시 씀 src.loop = true;
+        const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = o.hz;
+        const hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 250;
+        const gg = ctx.createGain(); gg.gain.value = o.g;
+        const pn = ctx.createStereoPanner(); pn.pan.value = o.pan;
+        const wg = ctx.createGain(); wg.gain.value = o.wet;
+        src.connect(hp); hp.connect(lp); lp.connect(gg); gg.connect(pn); pn.connect(out); pn.connect(wg); wg.connect(lrev); src.start(0, k * 1.7);
+        stops.push(() => { try { src.stop(); } catch (e) {} });
+      });
+      return () => stops.forEach(f => f());
+    } },
+  { id: "tent",    icon: "⛺", name: "텐트 위 빗소리", desc: "텐트 천에 톡톡 떨어지는 비",   vol: .5,  rev: .1,  make: loopLayer("tent", 14, 5000) },
+  { id: "roof",    icon: "🏠", name: "지붕 위 빗소리", desc: "함석지붕 빗발 + 홈통 물소리",  vol: .4,  rev: .15, make: loopLayer("roof", 14, 7000) },
+  { id: "wind",    icon: "🍃", name: "부드러운 바람", desc: "숲을 지나는 바람",           vol: .45, rev: 0,   make: loopLayer("wind", 16, 650) },
+  { id: "fire",    icon: "🔥", name: "모닥불",        desc: "타닥타닥 장작 타는 소리",     vol: .45, rev: 0,   make: loopLayer("fire", 12, 5000) },
+  { id: "birds",   icon: "🐦", name: "새소리",        desc: "아침 숲의 새들",             vol: .35, rev: .35,
+    make: out => every(1.2, 5.5, () => {
+      const pan = rnd(-0.8, 0.8);
+      if (Math.random() < 0.18) { const f = rnd(480, 560); for (let k = 0; k < 3; k++) blip(out, { f, f2: f * 0.9, dur: 0.32, a: 0.12, at: k * 0.45, pan }); return; }   // 산비둘기 구구
+      const base = rnd(2300, 4300), n = 2 + Math.floor(Math.random() * 5);
+      let at = 0;
+      for (let k = 0; k < n; k++) { const d = rnd(0.05, 0.14); blip(out, { f: base * rnd(0.9, 1.1), f2: base * rnd(1.15, 1.6), dur: d, a: 0.16, at, pan, vib: rnd(80, 260) }); at += d + rnd(0.03, 0.09); }
+    }) },
+  { id: "crickets", icon: "🦗", name: "풀벌레",       desc: "여름밤 귀뚜라미",            vol: .25, rev: .2,
+    make: out => {
+      const one = pan => every(0.55, 1.1, () => { const f = rnd(4400, 4900); for (let k = 0; k < 4; k++) blip(out, { f, dur: 0.022, a: 0.07, at: k * 0.045, pan }); });
+      const s1 = one(-0.6), s2 = one(0.6);
+      return () => { s1(); s2(); };
+    } },
+  { id: "frogs",   icon: "🐸", name: "개구리",        desc: "여름밤 논의 개구리 합창",      vol: .3,  rev: .25,
+    make: out => {
+      const frogs = Array.from({ length: 5 }, () => ({ f: rnd(380, 820), pan: rnd(-0.85, 0.85), rate: rnd(0.028, 0.045) }));
+      return every(0.18, 0.8, () => {                       // 개굴개굴: 짧은 펄스를 빠르게 이어 붙임
+        const fr = pick(frogs), n = 4 + Math.floor(Math.random() * 6), rep = Math.random() < 0.5 ? 2 : 1;
+        for (let r = 0; r < rep; r++)
+          for (let k = 0; k < n; k++) blip(out, { f: fr.f * rnd(0.97, 1.03), f2: fr.f * 0.88, dur: 0.022, a: 0.09, at: r * (n * fr.rate + 0.12) + k * fr.rate, pan: fr.pan, type: "triangle" });
+      });
+    } },  { id: "drops",   icon: "💦", name: "물방울",        desc: "동굴에 떨어지는 물방울",      vol: .4,  rev: .7,
+    make: out => every(0.5, 2.6, () => { const f = rnd(550, 1150); blip(out, { f, f2: f * rnd(1.7, 2.3), dur: rnd(0.08, 0.16), a: 0.22, pan: rnd(-0.7, 0.7) }); }) },
+  { id: "chimes",  icon: "🎐", name: "풍경 소리",     desc: "처마 끝 바람종",             vol: .3,  rev: .5,
+    make: out => every(2.5, 9, () => {
+      const notes = [1568, 1760, 2093, 2349, 2637], n = 1 + Math.floor(Math.random() * 3);
+      for (let k = 0; k < n; k++) strike(out, pick(notes), [[1, 1, 2.6], [2.76, .3, 1.2], [5.4, .1, .6]], 2.2, 0.22, k * rnd(0.25, 0.7));
+    }) },
+  { id: "emille",  icon: "🔔", name: "에밀레종",      desc: "깊고 긴 산사의 종 (40초마다)", vol: .5,  rev: .35,
+    make: out => every(38, 50, () => {
+      strike(out, 64, EMILLE, 0.33, 0.6);
+      const nb = ctx.createBufferSource(), len = ctx.sampleRate * 0.5, b = ctx.createBuffer(1, len, ctx.sampleRate), d = b.getChannelData(0);   // 당목이 닿는 둔탁한 소리
+      for (let i = 0; i < len; i++) d[i] = white() * Math.pow(1 - i / len, 6);
+      nb.buffer = b; const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 140;
+      const g = ctx.createGain(); g.gain.value = 1.2; nb.connect(lp); lp.connect(g); g.connect(out); nb.start();
+    }, [0.2, 0.6]) },
+  { id: "bowls",   icon: "🥣", name: "싱잉볼 명상",   desc: "가끔 울리는 싱잉볼",          vol: .4,  rev: .3,
+    make: out => every(14, 24, () => strike(out, pick([174, 196, 220, 261]), BELLS.bowl.parts, rnd(1.2, 2.2), 0.4), [0.3, 1]) },
+  { id: "hz432",   icon: "〰", name: "432Hz 명상음",  desc: "잔잔하게 이어지는 432Hz",     vol: .3,  rev: 0,   make: toneLayer(432, [[1, .22], [0.5, .16], [0.5, .1, 0.25], [1.5, .05], [2, .03]]) },
+  { id: "hz528",   icon: "〰", name: "528Hz 명상음",  desc: "잔잔하게 이어지는 528Hz",     vol: .3,  rev: 0,   make: toneLayer(528, [[1, .2], [0.5, .16], [0.5, .1, 0.25], [1.5, .04], [2, .03]]) },
+  { id: "file",    icon: "📁", name: "내 파일",        desc: "가진 소리 파일 반복",         vol: .6,  rev: 0,
+    make: out => {
+      const fid = cls.amb.fid; if (!fid) return () => {};
+      const el = new Audio(); el.loop = true; let alive = true;
+      urlFor(fid).then(u => { if (!alive || !u) return; el.src = u; ctx.createMediaElementSource(el).connect(out); el.play().catch(() => {}); });
+      return () => { alive = false; el.pause(); };
+    } },
+];
+const MIXES = [
+  { id: "camp",   icon: "🏕", name: "비 오는 캠핑",   layers: { tent: .55, fire: .35, wind: .2 } },
+  { id: "home",   icon: "🏠", name: "비 오는 날 집",  layers: { roof: .45, rain: .3, hz432: .12 } },
+  { id: "temple", icon: "🏯", name: "산사의 밤",      layers: { emille: .45, chimes: .3, wind: .3, crickets: .18 } },
+  { id: "forest", icon: "🌲", name: "아침 숲 개울",   layers: { stream: .5, birds: .38, wind: .2 } },
+  { id: "summer", icon: "🌙", name: "여름밤 시골",    layers: { frogs: .3, crickets: .22, stream: .22 } },
+  { id: "sea",    icon: "🌊", name: "밤바다",         layers: { ocean: .55, wind: .25 } },
+  { id: "cave",   icon: "🧘", name: "깊은 명상",      layers: { bowls: .4, hz432: .22, drops: .25 } },
+  { id: "sleep",  icon: "😴", name: "깊은 잠",        layers: { rain: .45, hz432: .15, wind: .15 } },
+];
+let myMixes = ls.get("mixes", []);
+function applyMix(m) {
+  const a = ambCfg(); a.layers = {};
+  for (const [id, v] of Object.entries(m.layers)) a.layers[id] = { on: true, vol: v };
+  a.on = true; saveCls(); ambApply(); toast(`믹스: ${m.name}`);
+}
+function mixMatch(m) {
+  const a = ambCfg(), on = Object.entries(a.layers).filter(([, l]) => l.on).map(([id]) => id).sort();
+  const want = Object.keys(m.layers).sort();
+  return a.on && on.length === want.length && on.every((id, i) => id === want[i]);
+}
+function renderMixes() {
+  const box = $("mixes"); box.innerHTML = "";
+  const add = (m, mine) => {
+    const b = document.createElement("span"); b.className = "mix" + (mixMatch(m) ? " on" : "");
+    b.innerHTML = `<span>${m.icon || "⭐"}</span><span class="n"></span>`; b.querySelector(".n").textContent = m.name;
+    b.title = Object.keys(m.layers).map(id => SOUNDS.find(S => S.id === id)?.name).filter(Boolean).join(" + ");
+    b.onclick = () => applyMix(m);
+    if (mine) {
+      const x = document.createElement("span"); x.className = "x"; x.textContent = "✕"; x.title = "이 믹스 지우기";
+      x.onclick = e => { e.stopPropagation(); myMixes = myMixes.filter(q => q !== m); ls.set("mixes", myMixes); renderMixes(); };
+      b.appendChild(x);
+    }
+    box.appendChild(b);
+  };
+  MIXES.forEach(m => add(m, false));
+  myMixes.forEach(m => add(m, true));
+  const sv = document.createElement("span"); sv.className = "mix save"; sv.textContent = "＋ 지금 조합 저장";
+  sv.onclick = async () => {
+    const a = ambCfg(), layers = {};
+    for (const [id, l] of Object.entries(a.layers)) if (l.on && id !== "file") layers[id] = l.vol ?? SOUNDS.find(S => S.id === id).vol;
+    if (!Object.keys(layers).length) { toast("먼저 소리를 하나 이상 켜세요"); return; }
+    const n = await ask("내 믹스 이름", "나의 믹스"); if (!n) return;
+    myMixes.push({ id: uid(), icon: "⭐", name: n, layers }); ls.set("mixes", myMixes); renderMixes(); toast("믹스를 저장했습니다");
+  };
+  box.appendChild(sv);
+}
+const running = {};                                       // id → { g, stop }
+function ambCfg() {
+  let a = cls.amb || {};
+  if (a.type !== undefined) {                              // 예전 형식(한 가지 소리) → 여러 층 형식
+    const map = { noise: "wind", ocean: "ocean", file: "file" }, layers = {};
+    if (map[a.type]) layers[map[a.type]] = { on: true };
+    a = { on: !!a.on, vol: a.vol ?? 0.6, layers, fid: a.fid, fname: a.name };
+  }
+  a.layers = a.layers || {}; a.vol = a.vol ?? 0.6;
+  cls.amb = a; return a;
+}
+const TRIM = { stream: 2.4, rain: 1.8, birds: 3, crickets: 4, frogs: 3, drops: 3, emille: 0.6 };   // 소리끼리 크기 맞춤 (실측)
+function startLayer(S, vol) {
+  const g = ctx.createGain(); g.gain.value = 0;
+  const tg = ctx.createGain(); tg.gain.value = 3 * (TRIM[S.id] || 1); g.connect(tg); tg.connect(ambG);
+  if (S.rev) { const sg = ctx.createGain(); sg.gain.value = S.rev; tg.connect(sg); sg.connect(rev); }
+  const stop = S.make(g);
+  ramp(g.gain, vol, 2.5, "in");
+  running[S.id] = { g, stop };
+}
+function stopLayer(id) {
+  const r = running[id]; if (!r) return; delete running[id];
+  ramp(r.g.gain, 0, 1.5, "out");
+  setTimeout(() => { r.stop(); setTimeout(() => r.g.disconnect(), 6000); }, 1600);
+}
+function ambApply() {
+  const a = ambCfg();
+  $("ambOn").checked = a.on; $("ambVol").value = a.vol;
+  $("ambCard").classList.toggle("off", !a.on);
+  for (const S of SOUNDS) {
+    const L = a.layers[S.id], want = a.on && L && L.on && (S.id !== "file" || a.fid);
+    if (want && !running[S.id]) { resume(); startLayer(S, L.vol ?? S.vol); }
+    else if (!want && running[S.id]) stopLayer(S.id);
+    else if (want) ramp(running[S.id].g.gain, L.vol ?? S.vol, 0.15);
+  }
+  ramp(ambG.gain, a.on ? a.vol : 0, a.on ? 1.2 : 1.5);
+  renderAmb();
+}
+function renderAmb() {
+  renderMixes();
+  const a = ambCfg(), grid = $("ambGrid"); grid.innerHTML = "";
+  for (const S of SOUNDS) {
+    const L = a.layers[S.id] || {}, b = document.createElement("div");
+    b.className = "snd" + (L.on ? " on" : ""); b.tabIndex = 0;
+    b.innerHTML = `<span class="t"><i>${S.icon}</i><b></b></span><small></small><input type="range" min="0" max="1" step="0.01" title="이 소리 볼륨">`;
+    b.querySelector("b").textContent = S.name;
+    b.querySelector("small").textContent = S.id === "file" && a.fname ? a.fname : S.desc;
+    const r = b.querySelector("input"); r.value = L.vol ?? S.vol;
+    r.onclick = e => e.stopPropagation();
+    r.oninput = () => { a.layers[S.id] = { ...L, on: true, vol: +r.value }; if (running[S.id]) ramp(running[S.id].g.gain, +r.value, 0.1); };
+    r.onchange = () => { saveCls(); renderMixes(); };
+    b.onclick = () => {
+      if (S.id === "file" && !a.fid) { $("ambIn").click(); return; }
+      const on = !L.on;
+      a.layers[S.id] = { ...L, on, vol: L.vol ?? S.vol };
+      if (on && !a.on) a.on = true;                          // 소리를 고르면 전체도 켬
+      saveCls(); ambApply();
+    };
+    if (S.id === "file") { b.oncontextmenu = e => { e.preventDefault(); $("ambIn").click(); }; b.title = "누르면 켜기·끄기, 오른쪽 클릭으로 다른 파일 고르기"; }
+    grid.appendChild(b);
+  }
+}
+$("ambIn").onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  const a = ambCfg(), id = uid(); await putFile({ id, name: f.name, blob: f });
+  const old = a.fid; a.fid = id; a.fname = f.name; a.on = true; a.layers.file = { on: true, vol: a.layers.file?.vol ?? 0.6 };
+  if (running.file) stopLayer("file");
+  await saveCls(); if (old) maybeDeleteFile(old);
+  setTimeout(ambApply, running.file ? 1700 : 0);
+};
+function ambToggle(on) {
+  const a = ambCfg(); a.on = on;
+  if (on && !Object.values(a.layers).some(l => l.on)) a.layers.rain = { on: true, vol: 0.55 };   // 아무것도 안 골랐으면 빗소리
+  saveCls(); ambApply();
+}
+$("ambOn").onchange = e => ambToggle(e.target.checked);
+$("ambVol").oninput = e => { const a = ambCfg(); a.vol = +e.target.value; if (a.on) ramp(ambG.gain, a.vol, 0.1); };
+$("ambVol").onchange = () => saveCls();
+
+// 끄기 예약: 정한 시간이 지나면 음악·배경 소리를 30초 동안 서서히 끔
+let sleepEnd = 0;
+$("sleepSel").onchange = e => {
+  const m = +e.target.value; sleepEnd = m ? performance.now() + m * 60000 : 0;
+  $("sleepLeft").textContent = ""; toast(m ? `${m}분 뒤 서서히 꺼집니다` : "끄기 예약 취소");
+};
+setInterval(() => {
+  if (!sleepEnd) return;
+  const left = (sleepEnd - performance.now()) / 1000;
+  if (left > 0) { $("sleepLeft").textContent = fmt2(left) + " 남음"; return; }
+  sleepEnd = 0; $("sleepSel").value = "0"; $("sleepLeft").textContent = "";
+  fadeStop(30);
+  ramp(ambG.gain, 0, 30, "out");
+  setTimeout(() => { const a = ambCfg(); a.on = false; saveCls(); ambApply(); }, 30500);
+}, 500);
+
+// ================= 곡 목록 =================
+async function addFiles(list) {
+  const fs = [...list].filter(f => f.type.startsWith("audio/") || /\.(mp3|m4a|aac|wav|ogg|flac|opus)$/i.test(f.name));
+  if (!fs.length) { toast("음악 파일(mp3 등)만 넣을 수 있습니다"); return; }
+  toast(`${fs.length}곡 넣는 중…`);
+  for (const f of fs) {
+    const id = uid();
+    const dur = await new Promise(r => { const a = new Audio(URL.createObjectURL(f)); a.onloadedmetadata = () => { r(a.duration || 0); URL.revokeObjectURL(a.src); }; a.onerror = () => r(0); });
+    await putFile({ id, name: f.name, blob: f });
+    cls.items.push({ fid: id, name: f.name.replace(/\.[^.]+$/, ""), dur, vol: 1, start: 0, loop: false });
+  }
+  await saveCls(); render();
+  toast(`${fs.length}곡 추가했습니다`);
+}
+async function maybeDeleteFile(fid) {                   // 다른 수업에서 안 쓰면 저장소에서도 지움
+  const used = classes.some(c => c.items.some(i => i.fid === fid) || (c.amb && c.amb.fid === fid));
+  if (!used) { await delFile(fid); if (urls.has(fid)) { URL.revokeObjectURL(urls.get(fid)); urls.delete(fid); } }
+}
+let openItem = null, dragFrom = null;
+function render() {
+  const ul = $("queue"); ul.innerHTML = "";
+  const its = items();
+  its.forEach((it, i) => {
+    const li = document.createElement("li");
+    li.className = (i === cur ? "cur " : "") + (openItem === it ? "open" : "");
+    li.draggable = true;
+    li.innerHTML = `<span class="grip" title="끌어서 순서 바꾸기">☰</span><span class="no">${i + 1}</span>
+      <span class="nm"><b></b><small></small></span>
+      <span class="tools">
+        <button class="ibtn lp${it.loop ? " on" : ""}" title="이 곡 반복 (사바아사나 등)">↻</button>
+        <button class="ibtn cfg${openItem === it ? " on" : ""}" title="곡 설정 (볼륨·시작 위치)">⚙</button>
+        <button class="ibtn del" title="목록에서 빼기">✕</button></span>
+      <div class="edit">
+        <label>볼륨 <input type="range" class="ev" min="0" max="1.5" step="0.01"><span class="evl"></span></label>
+        <label>시작 위치 <input type="number" class="es" min="0" step="1"> 초부터</label>
+      </div>`;
+    li.querySelector("b").textContent = it.name;
+    li.querySelector("small").textContent = [fmt(it.dur - (it.start || 0)), it.vol !== 1 ? `볼륨 ${Math.round(it.vol * 100)}%` : "", it.start ? `${it.start}초부터` : "", it.loop ? "반복" : ""].filter(Boolean).join(" · ");
+    li.onclick = e => { if (e.target.closest(".tools, .edit")) return; playing ? crossTo(i) : startAt(i, 1.5); };
+    li.querySelector(".lp").onclick = () => {
+      it.loop = !it.loop; saveCls();
+      decks.forEach(d => { if (d.item === it) d.el.loop = it.loop; });
+      render();
+    };
+    li.querySelector(".cfg").onclick = () => { openItem = openItem === it ? null : it; render(); };
+    li.querySelector(".del").onclick = async () => {
+      if (i === cur && playing) { toast("재생 중인 곡은 다른 곡으로 넘긴 뒤 빼세요"); return; }
+      its.splice(i, 1);
+      if (i < cur) cur--; else if (i === cur) { cur = -1; decks.forEach(d => { if (d.item === it) d.item = null; }); }
+      await saveCls(); maybeDeleteFile(it.fid); render();
+    };
+    const ev = li.querySelector(".ev"), evl = li.querySelector(".evl");
+    ev.value = it.vol; evl.textContent = Math.round(it.vol * 100) + "%";
+    ev.oninput = () => {
+      it.vol = +ev.value; evl.textContent = Math.round(it.vol * 100) + "%";
+      const d = A(); if (d.item === it && playing && !xfading) ramp(d.g.gain, it.vol, 0.1);
+    };
+    ev.onchange = () => { saveCls(); render(); };
+    const es = li.querySelector(".es"); es.value = it.start || 0;
+    es.onchange = () => { it.start = Math.max(0, Math.min(+es.value || 0, Math.max(0, (it.dur || 1) - 1))); saveCls(); render(); };
+    // 끌어서 순서 바꾸기
+    li.ondragstart = e => { dragFrom = i; li.classList.add("dragging"); e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", "row"); };
+    li.ondragend = () => { li.classList.remove("dragging"); dragFrom = null; };
+    li.ondragover = e => { if (dragFrom != null) e.preventDefault(); };
+    li.ondrop = e => {
+      if (dragFrom == null) return;
+      e.preventDefault(); e.stopPropagation();
+      const from = dragFrom; dragFrom = null; if (from === i) return;
+      const curItem = its[cur]; const [m] = its.splice(from, 1); its.splice(i, 0, m);
+      cur = curItem ? its.indexOf(curItem) : -1; saveCls(); render();
+    };
+    ul.appendChild(li);
+  });
+  if (!its.length) ul.innerHTML = '<li style="cursor:default;grid-template-columns:1fr;color:var(--dim)">아직 곡이 없습니다. 아래에 MP3를 끌어다 놓으세요.</li>';
+  const tot = its.reduce((s, it) => s + (it.dur - (it.start || 0)), 0) - Math.max(0, its.length - 1) * (cls.auto ? cls.xf : 0);
+  $("total").textContent = its.length ? `${its.length}곡 · 약 ${Math.max(1, Math.round(tot / 60))}분` : "";
+  const it = its[cur];
+  $("title").textContent = it ? it.name : (its.length ? "▶ 를 누르면 1번 곡부터 시작합니다" : "곡을 추가해 수업을 준비하세요");
+  const nx = its[cur + 1];
+  $("subline").textContent = it ? (nx ? `다음: ${nx.name}` : "마지막 곡") : (its.length ? `${cls.name} · ${its.length}곡` : "오른쪽에 MP3를 끌어다 놓으면 순서대로 재생됩니다");
+  if (!it) { $("fill").style.width = "0"; $("tCur").textContent = "0:00"; $("tLeft").textContent = "-0:00"; $("xfMark").hidden = true; }
+}
+$("addBtn").onclick = $("drop").onclick = () => $("fileIn").click();
+$("fileIn").onchange = e => { addFiles(e.target.files); e.target.value = ""; };
+const dz = $("drop");
+const hasFiles = e => [...(e.dataTransfer?.types || [])].includes("Files");
+document.addEventListener("dragover", e => { if (hasFiles(e)) { e.preventDefault(); dz.classList.add("over"); } });
+document.addEventListener("dragleave", e => { if (!e.relatedTarget) dz.classList.remove("over"); });
+document.addEventListener("drop", e => { dz.classList.remove("over"); if (hasFiles(e) && e.dataTransfer.files.length) { e.preventDefault(); addFiles(e.dataTransfer.files); } });
+
+$("xfSec").onchange = e => { cls.xf = Math.max(0, Math.min(30, Math.round(+e.target.value || 0))); e.target.value = cls.xf; saveCls(); render(); };
+$("autoNext").onchange = e => { cls.auto = e.target.checked; saveCls(); render(); };
+
+// ================= 수업 관리 =================
+function ask(title, value = "") {
+  return new Promise(res => {
+    const d = $("dlg"); $("dlgT").textContent = title; $("dlgIn").value = value;
+    const done = v => { d.close(); res(v); };
+    $("dlgOk").onclick = () => done($("dlgIn").value.trim() || null);
+    $("dlgNo").onclick = () => done(null);
+    d.oncancel = () => res(null);
+    $("dlgIn").onkeydown = e => { e.stopPropagation(); if (e.key === "Enter") { e.preventDefault(); $("dlgOk").click(); } };
+    d.showModal(); $("dlgIn").select();
+  });
+}
+const newClass = name => ({ id: uid(), name, items: [], xf: 8, auto: true, amb: { type: "none", vol: 0.35, on: false }, created: Date.now() });
+function fillClassSel() {
+  const s = $("classSel"); s.innerHTML = "";
+  classes.forEach(c => { const o = document.createElement("option"); o.value = c.id; o.textContent = c.name; s.appendChild(o); });
+  s.value = cls.id;
+}
+async function selectClass(id) {
+  if (playing) fadeStop(2);
+  cls = classes.find(c => c.id === id) || classes[0];
+  cur = -1; openItem = null;
+  decks.forEach(d => { d.item = null; });
+  ls.set("lastClass", cls.id);
+  $("xfSec").value = cls.xf; $("autoNext").checked = cls.auto;
+  fillClassSel(); render(); ambApply();
+}
+$("classSel").onchange = e => { e.target.blur(); selectClass(e.target.value); };
+$("classNew").onclick = async () => { const n = await ask("새 수업 이름", "새 수업"); if (!n) return; const c = newClass(n); classes.push(c); await putClass(c); selectClass(c.id); };
+$("classRen").onclick = async () => { const n = await ask("수업 이름 바꾸기", cls.name); if (!n) return; cls.name = n; await saveCls(); fillClassSel(); render(); };
+$("classDup").onclick = async () => {
+  const n = await ask("복제한 수업 이름", cls.name + " (복사)"); if (!n) return;
+  const c = { ...JSON.parse(JSON.stringify(cls)), id: uid(), name: n, created: Date.now() };
+  classes.push(c); await putClass(c); selectClass(c.id);
+};
+$("classDel").onclick = async () => {
+  if (classes.length < 2) { toast("수업이 하나뿐이라 지울 수 없습니다"); return; }
+  const n = await ask(`"${cls.name}" 수업을 지우려면  삭제  라고 입력하세요`, ""); if (n !== "삭제") return;
+  const gone = cls; classes = classes.filter(c => c !== gone); await delClass(gone.id);
+  for (const it of gone.items) await maybeDeleteFile(it.fid);
+  if (gone.amb?.fid) await maybeDeleteFile(gone.amb.fid);
+  selectClass(classes[0].id); toast("수업을 지웠습니다");
+};
+
+// ================= 그 밖 =================
+$("playBtn").onclick = togglePlay;
+$("nextBtn").onclick = $("xfBtn").onclick = next;
+$("prevBtn").onclick = prev;
+$("fadeBtn").onclick = () => fadeStop(6);
+$("bellBtn").onclick = () => bell();
+$("bellTest").onclick = () => bell();
+$("bellType").value = ls.get("bell", "bowl");
+$("bellType").onchange = e => ls.set("bell", e.target.value);
+$("duck").checked = ls.get("duck", true); $("duck").onchange = e => ls.set("duck", e.target.checked);
+$("savBell").checked = ls.get("savBell", true); $("savBell").onchange = e => ls.set("savBell", e.target.checked);
+$("savFade").checked = ls.get("savFade", false); $("savFade").onchange = e => ls.set("savFade", e.target.checked);
+const mv = ls.get("master", 0.9); $("master").value = mv; master.gain.value = mv; $("masterLbl").textContent = Math.round(mv * 100) + "%";
+function setMaster(v) { v = Math.max(0, Math.min(1, v)); $("master").value = v; ramp(master.gain, v, 0.08); $("masterLbl").textContent = Math.round(v * 100) + "%"; ls.set("master", v); }
+$("master").oninput = e => setMaster(+e.target.value);
+function classMode(on) {
+  document.body.classList.toggle("class-mode", on); $("modeBtn").classList.toggle("on", on);
+  if (on && !document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
+  if (!on && document.fullscreenElement) document.exitFullscreen?.();
+}
+$("modeBtn").onclick = () => classMode(!document.body.classList.contains("class-mode"));
+document.addEventListener("fullscreenchange", () => { if (!document.fullscreenElement && document.body.classList.contains("class-mode")) classMode(false); });
+$("helpBtn").onclick = () => $("helpDlg").showModal();
+$("helpOk").onclick = () => $("helpDlg").close();
+let lock = null;
+async function wake(on) {                                // 재생 중엔 화면이 꺼지지 않게
+  try { if (on && !lock && navigator.wakeLock) lock = await navigator.wakeLock.request("screen"); else if (!on && lock) { await lock.release(); lock = null; } } catch (e) { lock = null; }
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && playing) { lock = null; wake(true); } });
+
+addEventListener("keydown", e => {
+  if (e.target.matches("input[type=text], input[type=number], select") || e.ctrlKey || e.altKey || e.metaKey || document.querySelector("dialog[open]")) return;
+  const k = e.key.toLowerCase();
+  if (k === " ") { e.preventDefault(); togglePlay(); }
+  else if (k === "n" || k === "arrowright") { e.preventDefault(); next(); }
+  else if (k === "arrowleft") { e.preventDefault(); prev(); }
+  else if (k === "f") fadeStop(6);
+  else if (k === "b") bell();
+  else if (k === "s") savToggle();
+  else if (k === "a") { const on = !$("ambOn").checked; ambToggle(on); toast(on ? "배경 소리 켬" : "배경 소리 끔"); }
+  else if (k === "z") $("modeBtn").click();
+  else if (k === "arrowup" || k === "arrowdown") { e.preventDefault(); setMaster(+$("master").value + (k === "arrowup" ? 0.05 : -0.05)); toast(`볼륨 ${$("masterLbl").textContent}`); }
+});
+
+// ================= 시작 =================
+(async () => {
+  db = await openDB();
+  classes = (await allClasses()) || [];
+  classes.sort((a, b) => (a.created || 0) - (b.created || 0));
+  if (!classes.length) { const c = newClass("기본 수업"); classes.push(c); await putClass(c); }
+  setPlaying(false);
+  await selectClass(ls.get("lastClass", classes[0].id));
+  if (!db) toast("이 브라우저에선 곡이 저장되지 않습니다 (창을 닫으면 사라짐)");
+  if (!ls.get("seenHelp", false)) { ls.set("seenHelp", true); $("helpDlg").showModal(); }
+  tick();
+})();
+})();
+</script>
+</body>
+</html>
