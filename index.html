@@ -79,6 +79,19 @@
     .amb-head input[type=range] { width: 90px; }
     .amb-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .snd { padding: 10px; } .snd .t { font-size: 13px; }
+    /* 수업 모드(휴대폰): 한 화면에 큰 버튼만 */
+    body.class-mode header .chip, body.class-mode #helpBtn, body.class-mode .logo small, body.class-mode .tools3 { display: none; }
+    body.class-mode header { margin-bottom: 10px; }
+    body.class-mode .now { min-height: calc(100dvh - 86px); justify-content: space-evenly; padding: 14px 12px; gap: 10px; }
+    body.class-mode .orb { width: 170px; height: 170px; } body.class-mode .orb .core { width: 112px; height: 112px; }
+    body.class-mode .title { font-size: 22px; }
+    body.class-mode .cbtn { width: 68px; height: 68px; } body.class-mode .cbtn.big { width: 104px; height: 104px; }
+    body.class-mode .actions { display: grid; grid-template-columns: 1fr 1fr; width: 100%; gap: 10px; }
+    body.class-mode .abtn { justify-content: center; padding: 18px 8px; font-size: 17px; border-radius: 16px; }
+    body.class-mode .abtn.next { grid-column: 1 / -1; padding: 20px 8px; font-size: 18px; }
+    body.class-mode .vol { max-width: none; }
+    body.class-mode .vol input[type=range] { height: 8px; }
+    body.class-mode .vol input[type=range]::-webkit-slider-thumb { width: 26px; height: 26px; }
   }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 18px; backdrop-filter: blur(12px); }
   .card h3 { margin: 0 0 12px; font-size: 14px; font-weight: 600; color: var(--dim); letter-spacing: .2px; display: flex; align-items: center; gap: 8px; }
@@ -1263,6 +1276,7 @@ function setMaster(v) { v = Math.max(0, Math.min(1, v)); $("master").value = v; 
 $("master").oninput = e => setMaster(+e.target.value);
 function classMode(on) {
   document.body.classList.toggle("class-mode", on); $("modeBtn").classList.toggle("on", on);
+  $("modeBtn").lastChild.textContent = on ? "수업 모드 끝내기" : "수업 모드";
   if (on && !document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
   if (!on && document.fullscreenElement) document.exitFullscreen?.();
 }
