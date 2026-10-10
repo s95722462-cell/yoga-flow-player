@@ -424,7 +424,7 @@
         <div class="al-row"><b>최대 볼륨</b><input type="range" id="alMax" min="0.2" max="1" step="0.05" value="0.8" style="flex:1"><span id="alMaxL">80%</span></div>
       </div>
       <div style="display:flex;flex-direction:column;gap:10px">
-        <div class="al-row"><b>잠들기 소리</b><span id="alSleepName" style="color:var(--text)">배경 소리에서 고른 소리</span></div>
+        <div class="al-row"><b>잠들기 소리</b><select id="alSleepSound" style="flex:1 1 110px;min-width:0;max-width:100%" title="잠들기 시작을 누르면 이 소리가 배경 소리로 켜집니다"></select><button class="ibtn" id="alSleepTry" title="고른 잠들기 소리를 6초 동안 미리 듣기">▶ 듣기</button></div>
         <div class="al-row"><b>잠들기 시간</b><select id="alSleepMin"><option value="5">5분 뒤 작게</option><option value="10">10분 뒤 작게</option><option value="15">15분 뒤 작게</option><option value="30" selected>30분 뒤 작게</option><option value="60">60분 뒤 작게</option></select></div>
         <div class="al-row"><b>밤새 크기</b><select id="alKeep"><option value="0.03">거의 안 들리게</option><option value="0.08" selected>아주 작게</option><option value="0.18">은은하게</option></select></div>
       </div>
@@ -1311,6 +1311,7 @@ function ambApply() {
 }
 function renderAmb() {
   renderMixes();
+  { const o = $("alSleepSound").options[0]; if (o && o.value === "current") o.textContent = alCurName(); }
   const a = ambCfg(), grid = $("ambGrid"); grid.innerHTML = "";
   for (const S of allSounds()) {
     const L = a.layers[S.id] || {}, b = document.createElement("div");
@@ -1417,7 +1418,7 @@ setInterval(() => {
 
 // ================= 모닝콜 =================
 // 앱은 꺼지지 않고, 아주 작은 소리를 밤새 내며 기다리다가 기상 시간에 깨움 (휴대폰이 웹앱을 스스로 깨울 수는 없음)
-const AL0 = { time: "06:30", days: [], sound: "birds_bowl", ramp: 10, max: 0.8, sleepMin: 30, keep: 0.08 };
+const AL0 = { time: "06:30", days: [], sound: "birds_bowl", ramp: 10, max: 0.8, sleepMin: 30, keep: 0.08, sleepSound: "current" };
 let AL = { ...AL0, ...ls.get("alarm", {}) };
 const DAYN = ["일", "월", "화", "수", "목", "금", "토"];
 const WAKE = {
@@ -1456,10 +1457,66 @@ function alUI() {
     box.appendChild(b);
   });
   alSoundOptions();
-  const a = cls ? ambCfg() : null, on = a ? Object.entries(a.layers).filter(([, l]) => l.on).map(([id]) => soundOf(id)?.name).filter(Boolean) : [];
-  $("alSleepName").textContent = on.length ? on.join(" + ") : "빗소리 (배경 소리를 안 골라서 기본)";
+  alSleepOptions();
   alShowNext();
 }
+// 잠들기 소리: "current" = 지금 켜 둔 배경 소리 그대로 / "mix:<id>" = 믹스 / "snd:<id>" = 소리 한 가지
+function alCurName() {
+  const a = cls ? ambCfg() : null, on = a ? Object.entries(a.layers).filter(([, l]) => l.on).map(([id]) => soundOf(id)?.name).filter(Boolean) : [];
+  return "지금 켜 둔 소리 그대로 (" + (on.length ? on.join(" + ") : "없으면 빗소리") + ")";
+}
+let alSleepKey = "";
+function alSleepOptions() {
+  const sel = $("alSleepSound"); if (!cls) return;
+  const mixes = [...MIXES, ...myMixes], snds = allSounds();
+  const key = mixes.map(m => m.id + m.name).join() + "|" + snds.map(S => S.id + S.name).join();
+  if (key !== alSleepKey) {                               // 믹스·소리 목록이 바뀌었을 때만 다시 만듦
+    alSleepKey = key; sel.innerHTML = "";
+    const opt = (box, v, t) => { const o = document.createElement("option"); o.value = v; o.textContent = t; box.appendChild(o); };
+    const grp = l => { const g = document.createElement("optgroup"); g.label = l; sel.appendChild(g); return g; };
+    opt(sel, "current", "");
+    const gm = grp("믹스"); mixes.forEach(m => opt(gm, "mix:" + m.id, `${m.icon || "⭐"} ${m.name}`));
+    const gs = grp("소리 한 가지"); snds.filter(S => !S.user).forEach(S => opt(gs, "snd:" + S.id, `${S.icon} ${S.name}`));
+    const mine = snds.filter(S => S.user); if (mine.length) { const gf = grp("내 소리"); mine.forEach(S => opt(gf, "snd:" + S.id, `${S.icon} ${S.name}`)); }
+  }
+  sel.options[0].textContent = alCurName();
+  sel.value = alSleepPick() ? AL.sleepSound : "current";
+}
+function alSleepPick() {                                 // 고른 잠들기 소리 → { mix } 또는 { S } (없어졌으면 null = 지금 소리 그대로)
+  const v = AL.sleepSound || "current";
+  if (v.startsWith("mix:")) { const m = [...MIXES, ...myMixes].find(q => q.id === v.slice(4)); return m ? { mix: m } : null; }
+  if (v.startsWith("snd:")) { const S = cls && soundOf(v.slice(4)); return S ? { S } : null; }
+  return null;
+}
+function alSleepLayers() {                               // 미리 듣기용 { id: vol }
+  const p = alSleepPick(), a = ambCfg(), out = {};
+  if (p && p.mix) { for (const [id, v] of Object.entries(p.mix.layers)) if (soundOf(id)) out[id] = v; }
+  else if (p) out[p.S.id] = a.layers[p.S.id]?.vol ?? p.S.vol;
+  else { for (const [id, l] of Object.entries(a.layers)) if (l.on && soundOf(id)) out[id] = l.vol ?? soundOf(id).vol; if (!Object.keys(out).length) out.rain = 0.55; }
+  return out;
+}
+let alTry = null;                                        // 미리 듣기 (배경 소리 설정은 건드리지 않고 따로 6초 재생)
+function alTryStop() {
+  const t = alTry; alTry = null; if (!t) return;
+  clearTimeout(t.timer); ramp(t.g.gain, 0, 1.2, "out"); $("alSleepTry").textContent = "▶ 듣기";
+  setTimeout(() => { t.stops.forEach(f => { try { f(); } catch (e) {} }); setTimeout(() => t.g.disconnect(), 4000); }, 1300);
+}
+$("alSleepTry").onclick = () => {
+  if (alTry) { alTryStop(); return; }
+  if (AS) { toast("모닝콜이 켜져 있는 동안은 미리 듣기를 쓸 수 없습니다"); return; }
+  resume();
+  const g = ctx.createGain(); g.gain.value = 0; g.connect(master);
+  const stops = [], vol = ambCfg().vol;
+  for (const [id, v] of Object.entries(alSleepLayers())) {
+    const S = soundOf(id); if (!S) continue;
+    const tg = ctx.createGain(); tg.gain.value = 3 * (TRIM[id] || 1) * v; tg.connect(g);
+    if (S.rev) { const sg = ctx.createGain(); sg.gain.value = S.rev; tg.connect(sg); sg.connect(rev); }
+    stops.push(S.make(tg));
+  }
+  ramp(g.gain, vol, 1.5, "in");
+  alTry = { g, stops, timer: setTimeout(alTryStop, 6000) }; $("alSleepTry").textContent = "■ 멈춤";
+};
+$("alSleepSound").onfocus = alSleepOptions;
 $("alTime").onchange = e => { AL.time = e.target.value || "06:30"; alSave(); };
 $("alSound").onchange = e => { AL.sound = e.target.value; alSave(); };
 $("alRamp").onchange = e => { AL.ramp = +e.target.value; alSave(); };
@@ -1467,6 +1524,7 @@ $("alMax").oninput = e => { AL.max = +e.target.value; $("alMaxL").textContent = 
 $("alMax").onchange = alSave;
 $("alSleepMin").onchange = e => { AL.sleepMin = +e.target.value; alSave(); };
 $("alKeep").onchange = e => { AL.keep = +e.target.value; alSave(); };
+$("alSleepSound").onchange = e => { AL.sleepSound = e.target.value; alSave(); if (alTry) { alTryStop(); } };
 
 // 밤새 깨어 있기용: Web Audio 와 별도로 아주 작은 소리 파일을 반복 (휴대폰이 '재생 중'으로 인식)
 let keepEl = null;
@@ -1532,7 +1590,14 @@ async function alStart() {
   if (batt) {                                             // 충전 중일 때만 (밤새 작은 소리를 내서 배터리를 쓰므로)
     if (!batt.charging) { alert("충전기를 연결하면 모닝콜을 켤 수 있습니다.\n\n모닝콜은 밤새 아주 작은 소리를 내며 깨어 있어서 배터리를 씁니다."); return; }
   } else if (!confirm("충전기를 꽂으셨나요?\n\n모닝콜은 밤새 아주 작은 소리를 내며 깨어 있어서 충전 중일 때만 쓰는 것을 권장합니다.\n(아이폰은 앱이 충전 여부를 알 수 없어서 직접 확인합니다)")) return;
+  alTryStop();
+  const pick = alSleepPick();
+  if (pick && pick.mix) applyMix(pick.mix);               // 고른 믹스 (믹스 버튼과 똑같이)
   const a = ambCfg();
+  if (pick && pick.S) {                                   // 고른 소리 한 가지만 켬 (볼륨은 저장된 값 그대로)
+    for (const L of Object.values(a.layers)) L.on = false;
+    a.layers[pick.S.id] = { ...a.layers[pick.S.id], on: true, vol: a.layers[pick.S.id]?.vol ?? pick.S.vol };
+  }
   if (!Object.values(a.layers).some(l => l.on)) a.layers.rain = { on: true, vol: 0.55 };
   a.on = true; await saveCls(); ambApply();
   if (playing) fadeStop(5);
