@@ -298,6 +298,30 @@
   .hd-body td { padding: 5px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
   .hd-body td:first-child { white-space: nowrap; width: 1%; }
   #startDlg { width: min(460px, calc(100vw - 24px)); }
+  #bakDlg { width: min(520px, calc(100vw - 20px)); max-height: calc(100dvh - 20px); padding: 0; overflow: hidden; }
+  #bakDlg[open] { display: flex; flex-direction: column; }
+  .bk-top { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 8px; border-bottom: 1px solid var(--line); }
+  .bk-top h4 { margin: 0; }
+  .bk-body { overflow: auto; padding: 4px 16px 16px; -webkit-overflow-scrolling: touch; }
+  .bk-p { line-height: 1.6; margin: 8px 0; }
+  .bk-sec[hidden] { display: none; }
+  .bk-sec { margin-top: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+  .bk-row { display: flex; align-items: flex-start; gap: 8px; color: var(--text); line-height: 1.5; cursor: pointer; min-width: 0; overflow-wrap: anywhere; }
+  .bk-row input { width: auto; margin-top: 4px; flex: none; accent-color: #14b8a6; }
+  .bk-go { height: 40px; align-self: flex-start; padding: 0 14px; font-size: 14px; }
+  .bk-info { min-height: 1em; line-height: 1.5; overflow-wrap: anywhere; }
+  .bk-miss { margin: 0; padding-left: 18px; max-height: 160px; overflow: auto; font-size: 13px; color: var(--dim); overflow-wrap: anywhere; }
+  .queue li.miss .nm b { color: #fca5a5; }
+  /* 곡 ⚙ 타임라인 편집 */
+  .queue .edit { width: 100%; grid-column: 1 / -1; }
+  .queue .tl { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+  .queue .tlw { display: block; width: 100%; height: 56px; border-radius: 8px; background: #0b1113; cursor: ew-resize; touch-action: none; }
+  .queue .tlr { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+  .queue .tlr label { display: flex; align-items: center; gap: 6px; }
+  .queue .tlr input[type=text] { width: 76px; height: 28px; }
+  .queue .tlr input[type=number] { width: 78px; }
+  .queue .tlr .ibtn { height: 28px; font-size: 12px; }
+  .queue .tlh { color: var(--dim); font-size: 11.5px; line-height: 1.5; }
   .steps { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
   .steps li { display: flex; gap: 12px; align-items: flex-start; color: var(--dim); font-size: 14px; line-height: 1.6; }
   .steps li > span { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: #062b28; display: grid; place-items: center; font-weight: 700; font-size: 14px; }
@@ -334,7 +358,7 @@
     .amb-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .snd { padding: 10px; } .snd .t { font-size: 13px; }
     /* 수업 모드(휴대폰): 한 화면에 큰 버튼만 */
-    body.class-mode header .chip, body.class-mode #helpBtn, body.class-mode .logo small, body.class-mode .tools3 { display: none; }
+    body.class-mode header .chip, body.class-mode #helpBtn, body.class-mode #bakBtn, body.class-mode .logo small, body.class-mode .tools3 { display: none; }
     body.class-mode header { margin-bottom: 10px; }
     body.class-mode .now { min-height: calc(100dvh - 86px); justify-content: space-evenly; padding: 14px 12px; gap: 10px; }
     body.class-mode .orb { width: 170px; height: 170px; } body.class-mode .orb .core { width: 112px; height: 112px; }
@@ -362,13 +386,14 @@
     <div class="chip">
       <span class="muted">수업</span>
       <select id="classSel" title="수업 선택"></select>
-      <button class="ibtn" id="classNew" title="새 수업">＋</button>
-      <button class="ibtn" id="classRen" title="이름 바꾸기">✎</button>
-      <button class="ibtn" id="classDup" title="복제">⧉</button>
-      <button class="ibtn" id="classDel" title="수업 삭제">🗑</button>
+      <button class="ibtn" id="classNew" title="새 수업" aria-label="새 수업">＋</button>
+      <button class="ibtn" id="classRen" title="이름 바꾸기" aria-label="수업 이름 바꾸기">✎</button>
+      <button class="ibtn" id="classDup" title="복제" aria-label="수업 복제">⧉</button>
+      <button class="ibtn" id="classDel" title="수업 삭제" aria-label="수업 삭제">🗑</button>
     </div>
     <button class="ibtn" id="modeBtn" title="수업 모드 — 큰 버튼 전체 화면 (Z)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>수업 모드</button>
+    <button class="ibtn" id="bakBtn" title="백업·복원 — 수업 목록과 설정을 파일로 저장하거나 불러오기">💾 백업</button>
     <button class="ibtn" id="helpBtn" title="사용 설명서">? 설명서</button>
   </header>
 
@@ -385,9 +410,9 @@
       </div>
       <div class="cues" id="cues" hidden role="group" aria-label="큐 (곡 안의 위치 표시)"></div>
       <div class="ctrl">
-        <button class="cbtn" id="prevBtn" title="이전 곡 (←)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 6h2v12H7zM19 6v12l-9-6z"/></svg></button>
-        <button class="cbtn big" id="playBtn" title="재생 / 일시정지 — 부드럽게 (Space)"></button>
-        <button class="cbtn" id="nextBtn" title="다음 곡 — 부드럽게 넘김 (→)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M15 6h2v12h-2zM5 6v12l9-6z"/></svg></button>
+        <button class="cbtn" id="prevBtn" title="이전 곡 (←)" aria-label="이전 곡"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 6h2v12H7zM19 6v12l-9-6z"/></svg></button>
+        <button class="cbtn big" id="playBtn" title="재생 / 일시정지 — 부드럽게 (Space)" aria-label="재생"></button>
+        <button class="cbtn" id="nextBtn" title="다음 곡 — 부드럽게 넘김 (→)" aria-label="다음 곡"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M15 6h2v12h-2zM5 6v12l9-6z"/></svg></button>
       </div>
       <div class="actions">
         <button class="abtn next" id="xfBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17c4 0 6-10 10-10h8M3 7c4 0 6 10 10 10h8"/><path d="M18 4l3 3-3 3M18 14l3 3-3 3"/></svg>다음 곡으로 전환 <kbd>N</kbd></button>
@@ -405,7 +430,7 @@
       <h3>곡 순서 <span class="total" id="total"></span><span class="sp"></span>
         <button class="ibtn" id="addBtn">＋ 곡 추가</button></h3>
       <div class="opts">
-        <label>전환 시간 <input type="number" id="xfSec" min="0" max="30" step="1"> 초</label>
+        <label title="곡이 겹치며 넘어가는 시간 (곡 ⚙에서 곡마다 따로 정할 수도 있음)">전환 시간 <input type="number" id="xfSec" min="0" max="30" step="1" aria-label="전환 시간 (초)"> 초</label>
         <label class="switch" title="곡이 끝나기 전에 자동으로 다음 곡으로 넘어감"><input type="checkbox" id="autoNext" aria-label="자동으로 다음 곡"><span></span></label><span>자동으로 다음 곡</span>
       </div>
       <ul class="queue" id="queue"></ul>
@@ -518,9 +543,9 @@
     <h4 id="helpTitle">사용 설명서</h4>
     <button class="ibtn" id="helpX" title="닫기" aria-label="닫기">✕</button>
     <nav class="hd-nav" aria-label="설명서 차례">
-      <button data-go="h-ready">수업 준비</button><button data-go="h-class">수업 중</button><button data-go="h-cue">큐·파형</button>
+      <button data-go="h-ready">수업 준비</button><button data-go="h-tl">시작·끝·전환</button><button data-go="h-class">수업 중</button><button data-go="h-cue">큐·파형</button>
       <button data-go="h-amb">배경 소리</button><button data-go="h-sleep">끄기 예약</button><button data-go="h-alarm">모닝콜</button>
-      <button data-go="h-phone">휴대폰·아이폰</button><button data-go="h-keys">단축키</button><button data-go="h-about">정보</button>
+      <button data-go="h-backup">백업·복원</button><button data-go="h-phone">휴대폰·아이폰</button><button data-go="h-keys">단축키</button><button data-go="h-about">정보</button>
     </nav>
   </div>
   <div class="hd-body help" tabindex="-1" autofocus>
@@ -529,12 +554,24 @@
       <li>맨 위 <b>수업</b>에서 <b>＋</b>를 눌러 수업을 만듭니다 (예: 월요일 빈야사). 수업마다 곡 목록·배경 소리가 따로 저장됩니다. ✎ 이름 바꾸기, ⧉ 복제, 🗑 삭제.</li>
       <li><b>＋ 곡 추가</b>를 누르거나 MP3를 끌어다 놓습니다. 여러 곡을 한 번에 넣을 수 있습니다.</li>
       <li>순서는 곡 왼쪽의 <b>☰</b>를 끌어서 바꿉니다.</li>
-      <li>곡의 <b>⚙</b>에서 <b>볼륨</b>(곡마다 소리 크기 맞추기)과 <b>시작 위치</b>(앞부분 건너뛰기)를 정하고, <b>↻</b>로 한 곡 <b>반복</b>(사바아사나 등)을 켭니다.</li>
+      <li>곡의 <b>⚙</b>에서 <b>볼륨</b>(곡마다 소리 크기 맞추기)을 정하고, <b>↻</b>로 한 곡 <b>반복</b>(사바아사나 등)을 켭니다. 시작·끝 위치와 곡마다 전환 시간은 아래 <b>타임라인 편집</b>을 보세요.</li>
       <li><b>전환 시간</b>(기본 8초)은 곡이 겹치며 넘어가는 시간입니다. <b>자동으로 다음 곡</b>을 켜 두면 곡이 끝나기 전에 알아서 넘어갑니다. 진행 막대의 주황 점선이 넘어가기 시작하는 지점입니다.</li>
     </ol>
-    <div class="tip">곡은 이 기기의 브라우저 안에 저장됩니다 (인터넷으로 올라가지 않음). 다른 기기에서는 곡을 다시 넣어야 합니다.</div>
+    <div class="tip">곡은 이 기기의 브라우저 안에 저장됩니다 (인터넷으로 올라가지 않음). 다른 기기로 옮기거나 지워질 때를 대비해 맨 위 <b>💾 백업</b>으로 수업을 파일로 저장해 두세요.</div>
 
-    <h5 id="h-class">2. 수업 중</h5>
+    <h5 id="h-tl">2. 타임라인 편집 (시작·끝 위치, 곡마다 전환 시간)</h5>
+    <ul>
+      <li>곡의 <b>⚙</b>를 누르면 <b>곡 전체 파형</b>이 나옵니다. 밝은 부분이 실제로 재생되는 구간, 어두운 부분이 건너뛰는 앞뒤입니다.</li>
+      <li>파형 <b>왼쪽 손잡이</b>(초록)를 끌면 <b>시작 위치</b>, <b>오른쪽 손잡이</b>(주황)를 끌면 <b>끝 위치</b>가 바뀝니다. 긴 박수·광고·무음이 있는 앞뒤를 잘라낼 때 씁니다.</li>
+      <li>칸에 직접 넣어도 됩니다: <b>1:05</b>(1분 5초) 또는 <b>65</b>(초). 빈칸이면 처음부터 · 곡 끝까지입니다.</li>
+      <li>이 곡을 재생하면서 <b>⇤ 지금</b> / <b>지금 ⇥</b>를 누르면 지금 들리는 위치가 시작 / 끝이 됩니다.</li>
+      <li><b>다음 곡 전환</b>: 이 곡에서 다음 곡으로 넘어갈 때만 쓰는 전환 시간(0~30초)입니다. 빈칸이면 수업 기본값(위 ‘전환 시간’)을 씁니다. 0이면 겹치지 않고 바로 넘어갑니다.</li>
+      <li>파형의 <b>주황 구간</b>이 다음 곡과 겹치는 부분입니다. <b>▶ 끝 부분 듣기</b>로 그 바로 앞부터 들어 보며 확인하세요.</li>
+      <li>자동으로 다음 곡이 꺼져 있거나 마지막 곡이면, 끝 위치에서 짧게 줄이며 멈춥니다. 반복(↻) 곡은 끝 위치에서 시작 위치로 돌아갑니다.</li>
+      <li><b>되돌리기</b>는 시작·끝·전환 시간을 처음 값으로 돌립니다. 모두 수업 목록에 곡마다 저장됩니다.</li>
+    </ul>
+
+    <h5 id="h-class">3. 수업 중</h5>
     <ul>
       <li><b>▶ 재생·멈춤</b> — 1~2초 동안 부드럽게 커지고 작아집니다.</li>
       <li><b>다음 곡으로 전환 (N)</b> — 지금 곡이 작아지면서 다음 곡이 커집니다. 목록에서 곡을 눌러도 그 곡으로 부드럽게 넘어갑니다.</li>
@@ -546,7 +583,7 @@
       <li>가운데 원의 <b>수업 경과</b>는 음악이 나오는 동안만 셉니다. ‘싱잉볼 · 수업 시간’ 칸에서 0으로 돌립니다.</li>
     </ul>
 
-    <h5 id="h-cue">3. 큐 버튼 · 파형</h5>
+    <h5 id="h-cue">4. 큐 버튼 · 파형</h5>
     <ul>
       <li>곡을 재생하면 진행 막대 아래에 <b>큐 버튼 4개</b>가 나옵니다. 곡 안의 원하는 위치를 기억해 두었다가 바로 갈 수 있습니다 (예: 후렴, 조용해지는 부분).</li>
       <li><b>빈 큐</b>를 누르면 → 지금 위치가 저장됩니다.</li>
@@ -557,7 +594,7 @@
       <li><b>파형</b>은 곡을 처음 재생할 때 한 번 분석해서 그립니다 (그다음부터는 바로 보임). 파형을 누르면 그 위치로 이동합니다.</li>
     </ul>
 
-    <h5 id="h-amb">4. 배경 소리</h5>
+    <h5 id="h-amb">5. 배경 소리</h5>
     <ul>
       <li>빗소리·파도·시냇물·새소리·싱잉볼 명상·432Hz 등 <b>27가지</b> 소리를 이 앱이 직접 만들어 냅니다 (파일 필요 없음). 음악 아래에 깔리고, 곡이 바뀌어도 끊기지 않습니다.</li>
       <li>소리 카드를 누르면 켜지고 다시 누르면 꺼집니다. <b>여러 개를 함께 켜서 섞을 수</b> 있고, 카드마다 볼륨을 따로 조절합니다.</li>
@@ -566,14 +603,14 @@
       <li>스위치(<b>A</b>)로 배경 소리 전체를 켜고 끄며, 옆의 막대로 전체 크기를 정합니다.</li>
     </ul>
 
-    <h5 id="h-sleep">5. 끄기 예약</h5>
+    <h5 id="h-sleep">6. 끄기 예약</h5>
     <ul>
       <li>배경 소리 칸의 <b>끄기 예약</b>에서 10~90분, <b>직접 입력(분)</b>, <b>시각 지정</b>(예: 23:30, 이미 지났으면 다음 날) 중 고릅니다. 직접 입력·시각 지정은 <b>설정</b>을 눌러야 시작됩니다.</li>
       <li>시간이 되면 음악과 배경 소리가 <b>30초 동안 서서히</b> 꺼집니다. 남은 시간이 옆에 표시됩니다.</li>
       <li><b>모닝콜이 켜져 있으면</b> 배경 소리를 끄지 않고 ‘밤새 아주 작게’로 줄입니다 (아침에 깨우려면 앱이 깨어 있어야 하기 때문).</li>
     </ul>
 
-    <h5 id="h-alarm">6. 모닝콜</h5>
+    <h5 id="h-alarm">7. 모닝콜</h5>
     <ol>
       <li>기상 시각과 반복 요일, 깨우는 소리, 잠들기 소리를 고르고 <b>🌙 잠들기 시작</b>을 누릅니다 (충전기를 꽂은 상태에서).</li>
       <li>잠들기 소리가 정한 시간(5~60분) 동안 나오다가 <b>아주 작게 줄어 밤새</b> 이어집니다. 앱은 꺼지지 않고 작은 소리를 내며 기다립니다.</li>
@@ -581,7 +618,16 @@
     </ol>
     <div class="tip">앱을 닫거나(위로 밀어 종료) 다른 음악 앱을 틀면 아침에 울리지 않습니다. 휴대폰 기본 알람만큼 확실하지 않으니 <b>중요한 날은 기본 알람도</b> 함께 맞춰 두세요.</div>
 
-    <h5 id="h-phone">7. 휴대폰 · 아이폰에서</h5>
+    <h5 id="h-backup">8. 백업 · 복원 (다른 기기로 옮기기)</h5>
+    <ol>
+      <li>맨 위 <b>💾 백업</b>을 누릅니다.</li>
+      <li><b>내보내기</b>: ‘지금 수업만’ 또는 ‘모든 수업’을 고르고 <b>⇩ 백업 파일 저장</b>. 곡 순서·볼륨·시작/끝·전환 시간·큐·배경 소리와 설정이 <b>.json 파일 하나</b>로 저장됩니다. 휴대폰은 공유 창이 뜨면 <b>‘파일에 저장’</b>이나 카카오톡 나에게 보내기 등을 고르세요.</li>
+      <li><b>음원 파일도 함께 넣기</b>를 켜면 작은 음원(파일당 20MB 이하, 모두 150MB까지)도 백업 파일 안에 들어갑니다. 큰 파일은 이름만 저장됩니다.</li>
+      <li><b>불러오기</b>: 새 기기에서 <b>⇧ 백업 파일 열기</b>로 그 파일을 고릅니다. 수업은 <b>새 수업으로 추가</b>되고, 지금 있던 수업은 그대로 남습니다.</li>
+      <li>음원이 빠진 곡은 목록에 <b>⚠</b>로 표시됩니다. <b>🔗 파일 다시 연결</b>을 누르고 같은 음악 파일들을 한꺼번에 고르면 <b>이름으로 찾아 제자리에</b> 연결됩니다. 목록의 ⚠ 곡을 눌러 하나씩 연결할 수도 있습니다.</li>
+    </ol>
+
+    <h5 id="h-phone">9. 휴대폰 · 아이폰에서</h5>
     <ul>
       <li><b>홈 화면에 추가</b>하면 앱처럼 쓸 수 있습니다. 아이폰: Safari 아래 <b>공유(□↑) → 홈 화면에 추가</b>. 안드로이드: Chrome 메뉴(⋮) → <b>홈 화면에 추가</b>/<b>앱 설치</b>. 홈 화면에 추가해 두면 곡이 지워질 걱정도 줄어듭니다.</li>
       <li><b>화면이 꺼져도</b> 음악·자동 다음 곡·배경 소리·싱잉볼·타이머가 계속됩니다. 잠금 화면에서 곡 이름을 보고 다음 곡으로 넘길 수 있습니다.</li>
@@ -593,7 +639,7 @@
       <li>블루투스 스피커를 쓸 때는 연결한 뒤에 앱에서 재생하세요.</li>
     </ul>
 
-    <h5 id="h-keys">8. 단축키 (키보드)</h5>
+    <h5 id="h-keys">10. 단축키 (키보드)</h5>
     <table>
       <tr><td><kbd>Space</kbd></td><td>재생·멈춤 (부드럽게)</td></tr>
       <tr><td><kbd>N</kbd> <kbd>→</kbd></td><td>다음 곡으로 전환</td></tr>
@@ -607,20 +653,49 @@
       <tr><td><kbd>Z</kbd></td><td>수업 모드</td></tr>
     </table>
 
-    <h5 id="h-about">9. 정보</h5>
+    <h5 id="h-about">11. 정보</h5>
     <p><b>Yoga Flow Player</b> <span id="verHelp"></span> — 요가 수업 음악 전환 플레이어.<br>
-      곡·수업 목록·설정은 모두 이 기기 브라우저 안에만 저장되며 서버로 보내지 않습니다. 브라우저의 ‘방문 기록·사이트 데이터 삭제’를 하면 함께 지워질 수 있습니다.<br>
+      곡·수업 목록·설정은 모두 이 기기 브라우저 안에만 저장되며 서버로 보내지 않습니다. 브라우저의 ‘방문 기록·사이트 데이터 삭제’를 하면 함께 지워질 수 있으니 <b>💾 백업</b>으로 가끔 저장해 두세요.<br>
       권장: 컴퓨터는 Chrome·Edge 최신 버전, 휴대폰은 아이폰 Safari(iOS 17 이상)·안드로이드 Chrome.</p>
     <p><button class="ibtn" id="helpStart">처음 사용 안내 다시 보기</button></p>
   </div>
 </dialog>
+<dialog id="bakDlg" aria-labelledby="bakTitle">
+  <div class="bk-top"><h4 id="bakTitle">💾 백업 · 복원</h4><button class="ibtn" id="bkClose" title="닫기" aria-label="닫기">✕</button></div>
+  <div class="bk-body">
+    <p class="muted bk-p">수업 목록(곡 순서·볼륨·시작/끝 위치·전환 시간·큐·배경 소리)과 설정을 파일 하나(.json)로 저장합니다. 다른 기기로 옮기거나, 브라우저 데이터가 지워졌을 때 되살릴 수 있습니다.</p>
+    <section class="bk-sec">
+      <b>내보내기 (저장)</b>
+      <label class="bk-row"><input type="radio" name="bkWhat" value="cur" checked> 지금 수업만 — <span id="bkCurName"></span></label>
+      <label class="bk-row"><input type="radio" name="bkWhat" value="all"> 모든 수업 — <span id="bkAllN"></span></label>
+      <label class="bk-row"><input type="checkbox" id="bkEmbed"> 음원 파일도 함께 넣기</label>
+      <p class="muted bk-p" style="margin:0 0 0 24px">파일당 20MB 이하, 모두 합쳐 150MB까지 넣습니다. 더 큰 파일은 이름만 저장하고, 불러온 뒤 <b>다시 연결</b>합니다. 안 넣으면 백업 파일이 아주 작습니다.</p>
+      <button class="ibtn on bk-go" id="bkExport">⇩ 백업 파일 저장</button>
+      <div class="muted bk-info" id="bkInfo" aria-live="polite"></div>
+    </section>
+    <section class="bk-sec">
+      <b>불러오기 (복원)</b>
+      <label class="bk-row"><input type="checkbox" id="bkSettings" checked> 설정도 함께 불러오기 (볼륨·싱잉볼·타이머·모닝콜·내 믹스)</label>
+      <p class="muted bk-p" style="margin:0 0 0 24px">불러온 수업은 <b>새 수업으로 추가</b>됩니다 (지금 있는 수업은 그대로).</p>
+      <button class="ibtn bk-go" id="bkImport">⇧ 백업 파일 열기</button>
+      <input type="file" id="bkIn" accept=".json,application/json" hidden>
+    </section>
+    <section class="bk-sec" id="bkMissBox" hidden>
+      <b>빠진 음원 파일 <span id="bkMissN"></span></b>
+      <p class="muted bk-p">이 기기에 없는 곡입니다. 같은 파일을 골라 주면 이름으로 찾아 제자리에 연결합니다 (여러 개 한꺼번에 골라도 됨).</p>
+      <ul class="bk-miss" id="bkMissList"></ul>
+      <button class="ibtn on bk-go" id="bkRelink">🔗 파일 다시 연결</button>
+    </section>
+  </div>
+</dialog>
+<input type="file" id="relinkIn" accept="audio/*,.mp3,.m4a,.wav,.ogg,.flac" multiple hidden>
 <dialog id="startDlg" aria-labelledby="startTitle">
   <h4 id="startTitle">Yoga Flow Player에 오신 것을 환영해요 🧘</h4>
   <ol class="steps">
     <li><span>1</span><div><b>＋ 곡 추가</b>로 수업 음악(MP3)을 넣으세요. ☰를 끌어 순서를 바꿉니다.</div></li>
     <li><span>2</span><div><b>▶</b>로 시작하고, <b>다음 곡으로 전환</b>을 누르면 두 곡이 겹치며 부드럽게 넘어갑니다. 자동 전환도 됩니다.</div></li>
     <li><span>3</span><div>매트 위에서는 <b>수업 모드</b> — 버튼이 커지고 화면이 꺼지지 않습니다.</div></li>
-    <li><span>4</span><div>아래에 <b>싱잉볼·사바아사나 타이머·배경 소리·끄기 예약·모닝콜</b>이 있습니다.</div></li>
+    <li><span>4</span><div>곡의 <b>⚙</b>에서 시작·끝 위치와 전환 시간을 곡마다 정할 수 있고, 아래에 <b>싱잉볼·사바아사나 타이머·배경 소리·끄기 예약·모닝콜</b>이 있습니다. 수업은 <b>💾 백업</b>으로 파일에 저장해 두세요.</div></li>
   </ol>
   <p class="muted" style="margin:14px 0 0;line-height:1.6">휴대폰은 ‘홈 화면에 추가’하면 앱처럼 쓸 수 있어요. 자세한 내용은 언제든 위의 <b>? 설명서</b>에서 볼 수 있습니다.</p>
   <div class="btns"><button class="ibtn" id="startHelp">자세한 설명서</button><button class="ibtn on" id="startOk">시작하기</button></div>
@@ -645,7 +720,7 @@
 <script>
 (() => {
 const $ = id => document.getElementById(id);
-const APP_VER = "1.3", APP_DATE = "2026-10-11";
+const APP_VER = "1.4", APP_DATE = "2026-10-11";
 const ICON_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg>';
 const ICON_PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6.5" y="5" width="4" height="14" rx="1.2"/><rect x="13.5" y="5" width="4" height="14" rx="1.2"/></svg>';
 const fmt = s => { s = Math.max(0, s || 0); const m = Math.floor(s / 60), x = Math.floor(s % 60); return `${m}:${String(x).padStart(2, "0")}`; };
@@ -654,39 +729,80 @@ const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(
 function toast(t) { const el = $("toast"); el.textContent = t; el.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("show"), 1800); }
 const ls = { get(k, d) { try { const v = localStorage.getItem("yfp_" + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
              set(k, v) { try { localStorage.setItem("yfp_" + k, JSON.stringify(v)); } catch (e) {} } };
+const errLog = window.__yfpErr = [];                     // 예상 못 한 오류도 앱을 멈추지 않게 (기록만)
+addEventListener("unhandledrejection", e => { errLog.push("rej " + String(e.reason && (e.reason.stack || e.reason.message) || e.reason).slice(0, 300)); e.preventDefault(); });
+addEventListener("error", e => { errLog.push("err " + String(e.message).slice(0, 300)); });
+const safe = f => (...a) => { try { const r = f(...a); if (r && r.catch) r.catch(er => errLog.push("async " + er)); return r; } catch (er) { errLog.push("sync " + er); } };
 
 // ================= 저장소 (IndexedDB: 음원 파일 + 수업 목록) =================
 let db = null;
 const memFiles = new Map(), memClasses = new Map();
 function openDB() {
   return new Promise(res => {
+    let done = false; const fin = v => { if (!done) { done = true; res(v); } };
+    setTimeout(() => fin(null), 5000);                     // 브라우저가 응답하지 않으면 메모리 저장으로 (앱이 멈추지 않게)
     try {
       const r = indexedDB.open("yoga-flow-player", 1);
       r.onupgradeneeded = () => { r.result.createObjectStore("files", { keyPath: "id" }); r.result.createObjectStore("classes", { keyPath: "id" }); };
-      r.onsuccess = () => res(r.result);
-      r.onerror = () => res(null);
-    } catch (e) { res(null); }
+      r.onsuccess = () => {
+        const d = r.result;
+        d.onversionchange = () => { try { d.close(); } catch (e) {} db = null; };
+        d.onclose = () => { if (db === d) db = null; };    // 아이폰이 오래 쉬면 연결을 닫음 → 다음 저장 때 다시 엶
+        if (done) { try { d.close(); } catch (e) {} } else fin(d);
+      };
+      r.onerror = () => fin(null);
+      r.onblocked = () => fin(null);
+    } catch (e) { fin(null); }
   });
 }
-function req(store, mode, fn) {
+let dbOk = true, quotaWarned = 0;                         // dbOk=false → 메모리 저장(창 닫으면 사라짐)
+function storeErr(err) {
+  errLog.push("store " + (err && (err.name + ": " + err.message)));
+  const q = err && (err.name === "QuotaExceededError" || /quota/i.test(err.message || ""));
+  if (q && Date.now() - quotaWarned > 15000) { quotaWarned = Date.now(); setTimeout(() => toast("저장 공간이 부족해 저장하지 못했습니다 — 안 쓰는 곡·수업을 지워 주세요"), 0); }
+  return q;
+}
+async function req(store, mode, fn, again) {
+  if (!db && dbOk) db = await openDB();
+  if (!db) return null;
   return new Promise(res => {
     try {
       const t = db.transaction(store, mode), r = fn(t.objectStore(store));
-      t.oncomplete = () => res(r.result);
-      t.onerror = t.onabort = () => res(null);
-    } catch (e) { res(null); }
+      t.oncomplete = () => res(mode === "readwrite" ? (r.result === undefined ? true : r.result) : r.result);
+      t.onerror = t.onabort = e => { storeErr(t.error || (e && e.target && e.target.error)); res(null); };
+    } catch (e) {
+      if (!again && e && e.name === "InvalidStateError") {  // 닫힌 연결 → 다시 열고 한 번 더
+        db = null; req(store, mode, fn, true).then(res, () => res(null)); return;
+      }
+      storeErr(e); res(null);
+    }
   });
 }
-const putFile = f => db ? req("files", "readwrite", s => s.put(f)) : (memFiles.set(f.id, f), Promise.resolve());
-const getFile = id => db ? req("files", "readonly", s => s.get(id)) : Promise.resolve(memFiles.get(id));
-const delFile = id => db ? req("files", "readwrite", s => s.delete(id)) : (memFiles.delete(id), Promise.resolve());
-const putClass = c => db ? req("classes", "readwrite", s => s.put(JSON.parse(JSON.stringify(c)))) : (memClasses.set(c.id, c), Promise.resolve());
-const delClass = id => db ? req("classes", "readwrite", s => s.delete(id)) : (memClasses.delete(id), Promise.resolve());
-const allClasses = () => db ? req("classes", "readonly", s => s.getAll()) : Promise.resolve([...memClasses.values()]);
+async function putFile(f) {                              // 저장 실패(공간 부족·브라우저 제한) → 이번 창에서만 쓰도록 메모리에 둠 → "mem"
+  if (dbOk && await req("files", "readwrite", s => s.put(f))) { memFiles.delete(f.id); return true; }
+  memFiles.set(f.id, f); return dbOk ? "mem" : true;
+}
+const getFile = async id => memFiles.get(id) || (dbOk ? await req("files", "readonly", s => s.get(id)) : undefined);
+const delFile = async id => { memFiles.delete(id); return dbOk ? req("files", "readwrite", s => s.delete(id)) : true; };
+const fileIds = async () => { const k = dbOk ? await req("files", "readonly", s => s.getAllKeys()) : []; return Array.isArray(k) ? [...new Set([...k, ...memFiles.keys()])] : (dbOk ? null : [...memFiles.keys()]); };
+const putClass = c => dbOk ? req("classes", "readwrite", s => s.put(JSON.parse(JSON.stringify(c)))) : (memClasses.set(c.id, c), Promise.resolve(true));
+const delClass = id => dbOk ? req("classes", "readwrite", s => s.delete(id)) : (memClasses.delete(id), Promise.resolve(true));
+const allClasses = () => dbOk ? req("classes", "readonly", s => s.getAll()) : Promise.resolve([...memClasses.values()]);
 
 // ================= 오디오 =================
-const AC = window.AudioContext || window.webkitAudioContext;
-const ctx = new AC();
+// Web Audio 가 없는 브라우저(아주 드묾): 화면은 그대로 쓰고 음악만 그냥 재생 (부드러운 전환·배경 소리·싱잉볼은 안 됨)
+const NOAUDIO = !(window.AudioContext || window.webkitAudioContext);
+function FakeAC() {
+  const P = v => ({ value: v, setValueAtTime() {}, linearRampToValueAtTime() {}, exponentialRampToValueAtTime() {}, setValueCurveAtTime() {}, cancelScheduledValues() {} });
+  const N = () => ({ connect: x => x, disconnect() {}, start() {}, stop() {}, gain: P(1), frequency: P(0), Q: P(1), pan: P(0), detune: P(0), buffer: null, loop: false, type: "", fftSize: 512,
+    getByteTimeDomainData: a => a.fill(128) });
+  return { state: "running", sampleRate: 22050, destination: N(), get currentTime() { return performance.now() / 1000; }, resume: () => Promise.resolve(), addEventListener() {},
+    createGain: N, createAnalyser: N, createBiquadFilter: N, createConvolver: N, createStereoPanner: N, createOscillator: N, createBufferSource: N, createMediaElementSource: N,
+    createBuffer: (ch, n, sr) => ({ numberOfChannels: ch, length: n, sampleRate: sr, getChannelData: () => new Float32Array(n) }),
+    decodeAudioData: (b, ok, bad) => { const e = new Error("no web audio"); if (bad) bad(e); return Promise.reject(e); } };
+}
+const AC = window.AudioContext || window.webkitAudioContext || FakeAC;
+const ctx = NOAUDIO ? FakeAC() : new AC();
 const master = ctx.createGain(), duckG = ctx.createGain(), musicBus = ctx.createGain(), ambG = ctx.createGain();
 const analyser = ctx.createAnalyser(); analyser.fftSize = 512;
 musicBus.connect(duckG); duckG.connect(master); ambG.connect(master); master.connect(analyser); analyser.connect(ctx.destination);
@@ -729,6 +845,9 @@ function ramp(param, to, sec, shape = "lin") {           // 부드러운 볼륨 
 let classes = [], cls = null;
 let cur = -1, xfading = false, playing = false, busy = false;
 const urls = new Map();
+const missing = new Set(), badF = new Set();             // 저장소에 없는 파일 · 재생 못 하는 파일
+const playable = it => it && !missing.has(it.fid) && !badF.has(it.fid);
+function nextPlay(from) { const its = items(); for (let i = from + 1; i < its.length; i++) if (playable(its[i])) return i; return -1; }
 async function urlFor(fid) {
   if (urls.has(fid)) return urls.get(fid);
   const f = await getFile(fid);
@@ -738,48 +857,77 @@ async function urlFor(fid) {
 const items = () => (cls ? cls.items : []);
 const saveCls = () => cls ? putClass(cls) : Promise.resolve();
 
+// ================= 타임라인 (곡마다 시작·끝 위치, 전환 시간 — 없으면 예전과 똑같이 동작) =================
+const fin = x => typeof x === "number" && isFinite(x);
+const xfOf = it => (it && fin(it.xf) ? Math.max(0, Math.min(30, it.xf)) : cls.xf);           // 이 곡 → 다음 곡 전환 시간
+const stOf = it => (it && fin(it.start) && it.start > 0 ? it.start : 0);
+function endOf(it, dur) {                                 // 끝 위치 (없거나 이상하면 곡 끝)
+  if (!fin(dur) || dur <= 0) dur = fin(it && it.dur) && it.dur > 0 ? it.dur : Infinity;
+  const e = it && fin(it.end) ? it.end : null;
+  return e != null && e > stOf(it) + 1 && e < dur ? e : dur;
+}
+const isTrimEnd = (it, dur) => endOf(it, dur) < (fin(dur) ? dur : Infinity) - 0.05;
+const autoX = (it, len) => cls.auto && it && !it.loop && nextPlay(cur) >= 0 && len > xfOf(it) + 1;   // 자동 전환할 곡인가
+function parseT(s) {                                      // "1:23", "83", "1:02:03", "1.5" → 초 (빈칸 = null)
+  s = String(s ?? "").trim().replace(/,/g, ".").replace(/[：]/g, ":"); if (!s) return null;
+  if (!/^\d+(\.\d+)?(:\d+(\.\d+)?){0,2}$/.test(s)) return NaN;
+  return s.split(":").reduce((a, p) => a * 60 + +p, 0);
+}
+const fmtT = s => { if (!fin(s)) return ""; const t = Math.round(s * 10) / 10, m = Math.floor(t / 60), x = t - m * 60; return `${m}:${(x < 10 ? "0" : "") + (Number.isInteger(x) ? x : x.toFixed(1))}`; };
+
 // ================= 재생 =================
 async function loadInto(deck, idx) {
   const it = items()[idx];
   const u = await urlFor(it.fid);
-  if (!u) { toast("음원 파일을 찾을 수 없습니다: " + it.name); return false; }
-  deck.item = it;
-  deck.el.loop = !!it.loop;
+  if (!u) { missing.add(it.fid); toast("음원 파일이 없습니다 — 백업·복원에서 다시 연결하세요: " + it.name); render(); return false; }
+  deck.item = it; deck.endHit = false;
+  deck.el.loop = !!it.loop && !stOf(it) && !isTrimEnd(it, it.dur);   // 시작·끝을 정한 반복은 직접 되감음
   if (deck.el.src !== u) deck.el.src = u;
-  await new Promise(r => { if (deck.el.readyState >= 1) r(); else { deck.el.addEventListener("loadedmetadata", r, { once: true }); deck.el.addEventListener("error", r, { once: true }); } });
-  deck.el.currentTime = it.start || 0;
+  const ok = await new Promise(r => {
+    if (deck.el.readyState >= 1) return r(true);
+    const t = setTimeout(() => r(true), 8000);             // 일부 휴대폰은 재생 전에 정보를 안 줌 → 그냥 진행
+    deck.el.addEventListener("loadedmetadata", () => { clearTimeout(t); r(true); }, { once: true });
+    deck.el.addEventListener("error", () => { clearTimeout(t); r(false); }, { once: true });
+  });
+  if (!ok || deck.el.error) { badF.add(it.fid); toast("이 파일은 재생할 수 없습니다 (형식 확인): " + it.name); deck.item = null; render(); return false; }
+  try { deck.el.currentTime = stOf(it); } catch (e) {}
   return true;
 }
 async function startAt(idx, fadeSec) {                   // 멈춘 상태에서 시작
   if (idx < 0 || idx >= items().length || busy) return;
   busy = true; resume();
-  decks.forEach(d => { clearTimeout(d.timer); d.g.gain.cancelScheduledValues(ctx.currentTime); d.g.gain.value = 0; d.el.pause(); });
-  const d = A();
-  if (await loadInto(d, idx)) {
-    cur = idx;
-    await d.el.play().catch(() => {});
-    ramp(d.g.gain, d.item.vol ?? 1, fadeSec, "in");
-    setPlaying(true);
-  }
+  try {
+    decks.forEach(d => { clearTimeout(d.timer); d.g.gain.cancelScheduledValues(ctx.currentTime); d.g.gain.value = 0; d.el.pause(); });
+    const d = A();
+    if (await loadInto(d, idx)) {
+      cur = idx;
+      await d.el.play().catch(() => {});
+      ramp(d.g.gain, d.item.vol ?? 1, fadeSec, "in");
+      setPlaying(true);
+    }
+  } catch (e) { errLog.push("startAt " + e); }
   busy = false; render();
 }
-async function crossTo(idx, sec = cls.xf) {
+async function crossTo(idx, sec) {
   if (idx < 0 || idx >= items().length || busy) return;
   if (!playing) { await startAt(idx, 1.5); return; }
+  if (sec == null) sec = xfOf(A().item || items()[cur]);
   busy = true; resume();
-  const out = A(), inn = decks[1 - ad];
-  clearTimeout(inn.timer); clearTimeout(out.timer);
-  inn.g.gain.cancelScheduledValues(ctx.currentTime); inn.g.gain.value = 0;
-  if (await loadInto(inn, idx)) {
-    await inn.el.play().catch(() => {});
-    xfading = true;
-    ramp(out.g.gain, 0, sec, "out");
-    ramp(inn.g.gain, inn.item.vol ?? 1, sec, "in");
-    out.timer = setTimeout(() => out.el.pause(), sec * 1000 + 100);
-    clearTimeout(crossTo.t); crossTo.t = setTimeout(() => { xfading = false; }, sec * 1000 + 100);
-    ad = 1 - ad; cur = idx;
-    toast(`전환 → ${inn.item.name}`);
-  }
+  try {
+    const out = A(), inn = decks[1 - ad];
+    clearTimeout(inn.timer); clearTimeout(out.timer);
+    inn.g.gain.cancelScheduledValues(ctx.currentTime); inn.g.gain.value = 0;
+    if (await loadInto(inn, idx)) {
+      await inn.el.play().catch(() => {});
+      xfading = true;
+      ramp(out.g.gain, 0, sec, "out");
+      ramp(inn.g.gain, inn.item.vol ?? 1, sec, "in");
+      out.timer = setTimeout(() => out.el.pause(), sec * 1000 + 100);
+      clearTimeout(crossTo.t); crossTo.t = setTimeout(() => { xfading = false; }, sec * 1000 + 100);
+      ad = 1 - ad; cur = idx;
+      toast(`전환 → ${inn.item.name}`);
+    }
+  } catch (e) { errLog.push("crossTo " + e); }
   busy = false; render();
 }
 function pauseSoft() {
@@ -790,8 +938,8 @@ function pauseSoft() {
 }
 async function resumeSoft() {
   const d = A();
-  if (!d.item || d.el.ended || !d.el.src) { await startAt(Math.max(0, cur), 1.5); return; }
-  resume(); clearTimeout(d.timer);
+  if (!d.item || d.el.ended || !d.el.src || d.el.currentTime >= endOf(d.item, d.el.duration) - 0.3) { await startAt(Math.max(0, cur), 1.5); return; }
+  resume(); clearTimeout(d.timer); d.endHit = false;
   await d.el.play().catch(() => {});
   ramp(d.g.gain, d.item.vol ?? 1, 1.5, "in");
   setPlaying(true);
@@ -804,13 +952,14 @@ function fadeStop(sec = 6) {
   toast(`${sec}초 동안 서서히 끕니다`);
 }
 function next() {
-  if (cur + 1 < items().length) crossTo(cur + 1);
-  else if (playing) { fadeStop(Math.max(3, cls.xf)); toast("마지막 곡이었습니다 — 서서히 끕니다"); }
-  else if (items().length) startAt(0, 1.5);
+  const n = nextPlay(cur);
+  if (n >= 0) crossTo(n);
+  else if (playing) { fadeStop(Math.max(3, xfOf(A().item))); toast("마지막 곡이었습니다 — 서서히 끕니다"); }
+  else if (items().length) { const f = nextPlay(-1); if (f >= 0) startAt(f, 1.5); else toast("재생할 수 있는 곡이 없습니다 — 파일을 다시 연결하세요"); }
 }
 function prev() {
   const d = A();
-  if (playing && d.item && d.el.currentTime - (d.item.start || 0) > 5) { crossTo(cur, 2); return; }   // 5초 넘게 들었으면 이 곡 처음으로
+  if (playing && d.item && d.el.currentTime - stOf(d.item) > 5) { crossTo(cur, 2); return; }   // 5초 넘게 들었으면 이 곡 처음으로
   if (cur > 0) crossTo(cur - 1);
 }
 const MS = "mediaSession" in navigator ? navigator.mediaSession : null;
@@ -840,20 +989,27 @@ if (MS) {
   h("stop", () => fadeStop(3));
   h("nexttrack", () => next());
   h("previoustrack", () => prev());
-  h("seekto", e => { const d = A(); if (d.item && e.seekTime != null) d.el.currentTime = e.seekTime; });
+  h("seekto", e => { if (e && fin(e.seekTime)) seekTo(e.seekTime); });
 }
 function setPlaying(p) {
   playing = p;
   setTimeout(msMeta, 0);
   $("playBtn").innerHTML = p ? ICON_PAUSE : ICON_PLAY;
-  $("playBtn").title = p ? "일시정지 — 부드럽게 (Space)" : "재생 — 부드럽게 (Space)";
+  $("playBtn").title = p ? "일시정지 — 부드럽게 (Space)" : "재생 — 부드럽게 (Space)"; $("playBtn").setAttribute("aria-label", p ? "일시정지" : "재생");
   wake(p);
 }
 decks.forEach(d => d.el.addEventListener("ended", () => {
   if (d !== A()) return;
-  if (cls.auto && cur + 1 < items().length) crossTo(cur + 1, 1);
+  if (d.item && d.item.loop) { loopBack(d); return; }    // 시작 위치를 정한 반복 곡
+  const n = nextPlay(cur);
+  if (cls.auto && n >= 0) crossTo(n, 1);
   else { setPlaying(false); render(); }
 }));
+function loopBack(d) {                                    // 반복 곡: 끝 위치(또는 곡 끝) → 시작 위치로 아주 짧게 줄였다 키움
+  const it = d.item, v = it.vol ?? 1;
+  ramp(d.g.gain, 0, 0.08, "out");
+  setTimeout(() => { try { d.el.currentTime = stOf(it); } catch (e) {} if (d.el.paused && playing) d.el.play().catch(() => {}); if (d === A() && playing) ramp(d.g.gain, v, 0.25, "in"); d.endHit = false; wfKey = ""; }, 90);
+}
 
 // 진행 표시 + 자동 전환 + 숨쉬는 원
 const tbuf = new Uint8Array(512);
@@ -861,15 +1017,17 @@ function tick() {
   requestAnimationFrame(tick);
   const d = A(), it = d.item;
   if (it && d.el.duration) {
-    const st = it.start || 0, len = d.el.duration - st, pos = d.el.currentTime - st;
-    $("fill").style.width = Math.min(100, pos / len * 100) + "%";
-    $("tCur").textContent = fmt(pos);
-    $("tLeft").textContent = "-" + fmt(d.el.duration - d.el.currentTime);
-    const showX = cls.auto && !it.loop && cur + 1 < items().length && len > cls.xf + 1;
-    $("xfMark").hidden = !showX;
-    if (showX) $("xfMark").style.left = (len - cls.xf) / len * 100 + "%";
+    const st = stOf(it), en = endOf(it, d.el.duration), len = Math.max(0.1, en - st), pos = d.el.currentTime - st;
+    if (fin(len)) {
+      $("fill").style.width = Math.max(0, Math.min(100, pos / len * 100)) + "%";
+      $("tCur").textContent = fmt(pos);
+      $("tLeft").textContent = "-" + fmt(en - d.el.currentTime);
+      const showX = autoX(it, len);
+      $("xfMark").hidden = !showX;
+      if (showX) $("xfMark").style.left = (len - xfOf(it)) / len * 100 + "%";
+    }
   }
-  wfDraw();
+  wfDraw(); if (tlCan) tlDraw();
   analyser.getByteTimeDomainData(tbuf);
   let sum = 0; for (const b of tbuf) { const x = (b - 128) / 128; sum += x * x; }
   tick.s = (tick.s || 0) * 0.88 + Math.sqrt(sum / tbuf.length) * 0.12;
@@ -877,16 +1035,30 @@ function tick() {
 }
 function watch() {                                       // 곡 끝나기 전 자동 전환 — 화면이 꺼져도 돌아감
   const d = A(), it = d.item;
-  if (!playing || !it || !d.el.duration || xfading || busy) return;
-  const len = d.el.duration - (it.start || 0);
-  if (cls.auto && !it.loop && cur + 1 < items().length && len > cls.xf + 1 && d.el.duration - d.el.currentTime <= cls.xf) crossTo(cur + 1);
+  if (!playing || !it || !d.el.duration || busy) return;
   msPos();
+  if (xfading) return;
+  const st = stOf(it), en = endOf(it, d.el.duration), len = en - st, t = d.el.currentTime, rest = en - t;
+  if (!fin(rest)) return;
+  if (autoX(it, len) && rest <= xfOf(it)) { crossTo(nextPlay(cur)); return; }
+  if (d.endHit || !(isTrimEnd(it, d.el.duration) || (it.loop && !d.el.loop))) return;   // 아래는 '끝 위치'를 정한 곡 · 직접 되감는 반복 곡만
+  if (it.loop) {                                          // 반복: 끝 위치에서 시작 위치로
+    if (rest <= 0.3) { d.endHit = true; clearTimeout(watch.t); watch.t = setTimeout(() => loopBack(d), Math.max(0, rest - 0.08) * 1000); }
+    return;
+  }
+  const n = nextPlay(cur);
+  if (cls.auto && n >= 0) { if (rest <= 0.3) { d.endHit = true; crossTo(n, 1); } return; }   // 전환 시간이 곡보다 길 때
+  if (rest <= 1.5) {                                      // 마지막 곡 · 자동 꺼짐: 끝 위치에서 서서히 멈춤
+    d.endHit = true; ramp(d.g.gain, 0, Math.max(0.2, rest), "out");
+    clearTimeout(d.timer); d.timer = setTimeout(() => { d.el.pause(); if (d === A()) { setPlaying(false); render(); } }, Math.max(0.2, rest) * 1000 + 60);
+  }
 }
 setInterval(watch, 250);
 decks.forEach(d => d.el.addEventListener("timeupdate", watch));
 function seekTo(t) {                                      // 곡 안에서 위치 이동 (재생 중이면 아주 짧게 줄였다 키워 '툭' 소리 없게)
-  const d = A(); if (!d.item || !d.el.duration) return;
-  t = Math.max(0, Math.min(d.el.duration - 0.2, t));
+  const d = A(); if (!d.item || !d.el.duration || !fin(t)) return;
+  t = Math.max(0, Math.min(endOf(d.item, d.el.duration) - 0.2, t));
+  d.endHit = false;
   if (playing && !xfading && !busy) {
     const v = d.item.vol ?? 1; ramp(d.g.gain, 0, 0.12, "out");
     clearTimeout(seekTo.t); seekTo.t = setTimeout(() => { d.el.currentTime = t; ramp(d.g.gain, v, 0.35, "in"); }, 130);
@@ -895,38 +1067,46 @@ function seekTo(t) {                                      // 곡 안에서 위�
 }
 function seekFromX(el, clientX) {
   const d = A(); if (!d.item || !d.el.duration) return;
-  const r = el.getBoundingClientRect(), st = d.item.start || 0;
-  seekTo(st + Math.max(0, Math.min(1, (clientX - r.left) / r.width)) * (d.el.duration - st));
+  const r = el.getBoundingClientRect(), st = stOf(d.item);
+  seekTo(st + Math.max(0, Math.min(1, (clientX - r.left) / r.width)) * (endOf(d.item, d.el.duration) - st));
 }
 $("bar").addEventListener("click", e => seekFromX($("bar"), e.clientX));
 $("wave").addEventListener("click", e => seekFromX($("wave"), e.clientX));
 
 // ================= 파형 (곡마다 한 번 분석 → 수업 목록에 작은 글자로 저장, 다음부터는 바로 그림) =================
 const WF_N = 480, WF_A = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";   // 막대 480개 · 0~61 단계
-const wfMem = new Map(), wfFail = new Set();
+const wfMem = new Map(), wfFail = new Set(), wfPend = new Set();
 let wfQ = Promise.resolve(), wfKey = "";
 const wfOf = it => it && (it.wf || wfMem.get(it.fid));
 const decodeP = (c, b) => new Promise((res, rej) => { const p = c.decodeAudioData(b, res, rej); if (p && p.then) p.then(res, rej); });
+function wfQueue(fid) {                                   // 파형 분석은 한 번에 하나씩 (메모리 아끼기)
+  if (!fid || wfMem.has(fid) || wfFail.has(fid) || wfPend.has(fid)) return;
+  wfPend.add(fid);
+  wfQ = wfQ.then(() => wfMake(fid)).catch(() => wfFail.add(fid)).then(() => { wfPend.delete(fid); wfKey = ""; if (tlCan) tlCan.key = ""; });
+}
 function wfEnsure() {                                     // 지금 곡의 파형이 없으면 잠시 뒤 조용히 분석 (전환 중·화면 꺼짐엔 미룸)
   const it = items()[cur];
-  if (!it || wfOf(it) || wfFail.has(it.fid) || wfEnsure.busy === it.fid) return;
+  if (!it || wfOf(it) || wfFail.has(it.fid) || wfPend.has(it.fid)) return;
   clearTimeout(wfEnsure.t);
   wfEnsure.t = setTimeout(() => {
     if (document.hidden || xfading || busy) { wfEnsure.t = setTimeout(wfEnsure, 3000); return; }
-    const fid = it.fid; wfEnsure.busy = fid;
-    wfQ = wfQ.then(() => wfMake(fid)).catch(() => wfFail.add(fid)).then(() => { wfEnsure.busy = null; wfKey = ""; });
+    wfQueue(it.fid);
   }, 1500);
 }
+const MOBILE = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
 async function wfMake(fid) {
   const f = await getFile(fid);
   if (!f || !f.blob || f.blob.size > 120e6) { wfFail.add(fid); return; }
-  const buf = await f.blob.arrayBuffer();
+  let dur = 0; for (const c of classes) for (const it of c.items) if (it.fid === fid && fin(it.dur)) dur = Math.max(dur, it.dur);
+  if (!dur) dur = f.blob.size / 24000;                    // 길이를 모르면 파일 크기로 어림
+  if (dur > (MOBILE ? 25 : 90) * 60) { wfFail.add(fid); return; }   // 아주 긴 곡은 파형 없이 (휴대폰 메모리 보호)
   const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  const rates = OAC ? (dur < 600 ? [8000, 22050] : [8000]) : [];
   let ab = null;
-  for (const sr of [8000, 22050]) {                       // 낮은 표본율로 풀면 휴대폰 메모리를 적게 씀
-    try { ab = await decodeP(new OAC(1, 1, sr), buf.slice(0)); break; } catch (e) {}
+  for (const sr of rates) {                               // 낮은 표본율로 풀면 휴대폰 메모리를 적게 씀
+    try { ab = await decodeP(new OAC(1, 1, sr), await f.blob.arrayBuffer()); break; } catch (e) {}
   }
-  if (!ab) { if (f.blob.size > 30e6) { wfFail.add(fid); return; } ab = await decodeP(ctx, buf); }
+  if (!ab) { if (f.blob.size > 30e6 || dur >= 600) { wfFail.add(fid); return; } ab = await decodeP(ctx, await f.blob.arrayBuffer()); }
   const chs = Math.min(2, ab.numberOfChannels), n = ab.length, per = n / WF_N, pk = new Float32Array(WF_N);
   const data = Array.from({ length: chs }, (_, c) => ab.getChannelData(c));
   for (let b = 0; b < WF_N; b++) {
@@ -948,10 +1128,11 @@ function wfDraw() {                                       // tick 에서 부름 
   if (wv.hidden) { wv.hidden = false; wfKey = ""; }
   const dpr = Math.min(2, devicePixelRatio || 1), W = Math.round(wv.clientWidth * dpr), H = Math.round(wv.clientHeight * dpr);
   if (!W || !H) return;
-  const dur = d.el.duration, st = Math.min(it.start || 0, dur - 0.1), len = dur - st;
+  const dur = d.el.duration, st = Math.min(stOf(it), dur - 0.1), en = endOf(it, dur), len = Math.max(0.1, en - st);
+  if (!fin(len)) return;
   const px = Math.round((d.el.currentTime - st) / len * W);
-  const showX = cls.auto && !it.loop && cur + 1 < items().length && len > cls.xf + 1;
-  const key = [it.fid, W, H, px, st, (it.cues || []).join(), showX && cls.xf].join("|");
+  const showX = autoX(it, len), xs = xfOf(it);
+  const key = [it.fid, W, H, px, st, en, (it.cues || []).join(), showX && xs].join("|");
   if (key === wfKey) return; wfKey = key;
   if (wv.width !== W) wv.width = W; if (wv.height !== H) wv.height = H;
   const g = wctx; g.clearRect(0, 0, W, H);
@@ -963,12 +1144,13 @@ function wfDraw() {                                       // tick 에서 부름 
     g.fillStyle = x + bw <= px ? "#5eead4" : x < px ? "#a7f3d0" : "#ffffff30";
     g.fillRect(x, mid - h / 2, bw, h);
   }
-  if (showX) {                                            // 자동 전환 시작 지점
-    const x = Math.round((len - cls.xf) / len * W);
+  if (showX) {                                            // 자동 전환 구간 (주황 점선부터 끝까지 겹쳐 넘어감)
+    const x = Math.round((len - xs) / len * W);
+    g.fillStyle = "#fbbf7718"; g.fillRect(x, 0, W - x, H);
     g.fillStyle = "#fbbf77aa"; for (let y = 0; y < H; y += 6 * dpr) g.fillRect(x, y, Math.max(1, dpr), 3 * dpr);
   }
   (it.cues || []).forEach((c, k) => {                     // 큐 표시
-    if (c == null || c < st) return;
+    if (c == null || c < st || c > en) return;
     const x = Math.round((c - st) / len * W);
     g.fillStyle = CUE_C[k]; g.fillRect(x - dpr, 0, 2 * dpr, H);
     g.beginPath(); g.arc(x, 4 * dpr, 4 * dpr, 0, 7); g.fill();
@@ -1019,11 +1201,114 @@ function cueShow() {
   const bar = $("bar"); bar.querySelectorAll(".cm").forEach(x => x.remove());   // 진행 막대에도 표시
   const d = A();
   if (d.item === it && d.el.duration) {
-    const st = it.start || 0, len = d.el.duration - st;
-    (it.cues || []).forEach((c, k) => { if (c == null || c < st) return; const m = document.createElement("span"); m.className = "cm"; m.style.left = (c - st) / len * 100 + "%"; m.style.background = CUE_C[k]; bar.appendChild(m); });
+    const st = stOf(it), en = endOf(it, d.el.duration), len = Math.max(0.1, en - st);
+    (it.cues || []).forEach((c, k) => { if (c == null || c < st || c > en) return; const m = document.createElement("span"); m.className = "cm"; m.style.left = (c - st) / len * 100 + "%"; m.style.background = CUE_C[k]; bar.appendChild(m); });
   }
 }
-decks.forEach(d => d.el.addEventListener("loadedmetadata", () => { if (d === A()) cueShow(); }));
+decks.forEach(d => d.el.addEventListener("loadedmetadata", () => {
+  const it = d.item;
+  if (it && fin(d.el.duration) && d.el.duration > 0 && !(fin(it.dur) && it.dur > 0)) { it.dur = d.el.duration; saveCls(); render(); }   // 길이를 몰랐던 곡
+  if (d === A()) cueShow();
+}));
+
+// ================= 타임라인 편집 (곡 ⚙: 파형에서 시작·끝 손잡이, 전환 시간) =================
+function itDur(it) { const d = A(); return d.item === it && fin(d.el.duration) && d.el.duration > 0 ? d.el.duration : (fin(it.dur) && it.dur > 0 ? it.dur : 0); }
+function applyTrim(it) {                                  // 바뀐 시작·끝·반복을 재생 중인 데크에 바로 반영
+  decks.forEach(d => { if (d.item === it) { d.el.loop = !!it.loop && !stOf(it) && !isTrimEnd(it, d.el.duration || it.dur); d.endHit = false; } });
+  wfKey = ""; cueShow();
+}
+let tlCan = null;                                         // 펼친 곡의 편집 파형 { cv, it, key }
+function tlSetup(li, it, i) {
+  const cv = li.querySelector(".tlw"), es = li.querySelector(".es"), ee = li.querySelector(".ee"), ex = li.querySelector(".ex"), hint = li.querySelector(".tlh");
+  const dur = itDur(it);
+  tlCan = { cv, it, key: "" };
+  if (!wfOf(it)) wfQueue(it.fid);
+  const sync = () => {
+    if (document.activeElement !== es) es.value = stOf(it) ? fmtT(stOf(it)) : "";
+    if (document.activeElement !== ee) ee.value = isTrimEnd(it, dur) ? fmtT(endOf(it, dur)) : "";
+    ex.value = fin(it.xf) ? it.xf : ""; ex.placeholder = `기본 ${cls.xf}`;
+    if (tlCan) tlCan.key = ""; tlDraw();
+  };
+  hint.textContent = dur ? "파형 양 끝의 손잡이를 끌거나 분:초(예: 1:05)로 넣으세요. 빈칸 = 처음부터 · 곡 끝까지, 전환 빈칸 = 수업 기본값. 주황 = 다음 곡과 겹치는 구간."
+                         : "곡 길이를 아직 몰라 파형 편집은 쓸 수 없습니다 — 한 번 재생하면 됩니다 (입력칸은 지금도 쓸 수 있음).";
+  const commit = () => { saveCls(); applyTrim(it); render(); };
+  function setStart(v, quiet) {
+    if (v == null || v <= 0) { it.start = 0; return true; }
+    if (!fin(v)) { if (!quiet) toast("시간은 분:초(예: 1:05) 또는 초(예: 65)로 넣어 주세요"); return false; }
+    const lim = Math.min(dur || Infinity, fin(it.end) ? it.end : Infinity) - 2;
+    if (lim <= 0) return false;
+    it.start = Math.round(Math.max(0, Math.min(v, lim)) * 10) / 10; return true;
+  }
+  function setEnd(v, quiet) {
+    if (v == null) { delete it.end; return true; }
+    if (!fin(v)) { if (!quiet) toast("시간은 분:초(예: 3:40) 또는 초로 넣어 주세요"); return false; }
+    it.end = Math.round(Math.max(stOf(it) + 2, v) * 10) / 10;
+    if (dur && it.end >= dur - 0.25) delete it.end;
+    return true;
+  }
+  es.onchange = () => { if (setStart(parseT(es.value))) commit(); else sync(); };
+  ee.onchange = () => { if (setEnd(parseT(ee.value))) commit(); else sync(); };
+  [es, ee, ex].forEach(x => x.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); x.blur(); } }));
+  ex.onchange = () => {
+    const v = ex.value.trim();
+    if (v === "") delete it.xf; else { const n = +v; if (!isFinite(n)) { sync(); return; } it.xf = Math.max(0, Math.min(30, Math.round(n))); }
+    commit();
+  };
+  const nowPos = () => { const d = A(); return d.item === it && d.el.duration ? d.el.currentTime : null; };
+  li.querySelector(".tin").onclick = () => { const t = nowPos(); if (t == null) { toast("이 곡을 재생하는 중에 쓸 수 있습니다"); return; } if (setStart(t)) { commit(); toast(`시작 위치 ${fmtT(stOf(it))}`); } };
+  li.querySelector(".tout").onclick = () => { const t = nowPos(); if (t == null) { toast("이 곡을 재생하는 중에 쓸 수 있습니다"); return; } if (t < stOf(it) + 2) { toast("끝 위치는 시작보다 2초 넘게 뒤여야 합니다"); return; } if (setEnd(t)) { commit(); toast(`끝 위치 ${fmtT(endOf(it, itDur(it)))}`); } };
+  li.querySelector(".trs").onclick = () => { it.start = 0; delete it.end; delete it.xf; commit(); toast("시작·끝·전환 시간을 처음 값으로 되돌렸습니다"); };
+  li.querySelector(".tpre").onclick = async () => {        // 끝 부분 듣기: 전환 구간 몇 초 앞부터
+    if (A().item !== it || !playing) await (playing ? crossTo(i, 1.5) : startAt(i, 0.5));
+    const d = A(); if (d.item !== it) return;
+    const t = Math.max(stOf(it), endOf(it, d.el.duration) - xfOf(it) - 5);
+    seekTo(t); toast(`끝 부분부터 (${fmtT(t)}) — 주황 구간에서 다음 곡으로 넘어갑니다`);
+  };
+  let drag = null;
+  const toT = e => { const r = cv.getBoundingClientRect(); return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * dur; };
+  const move = e => { const t = toT(e); if (drag === "s") setStart(t, true); else setEnd(t, true); sync(); };
+  cv.onpointerdown = e => {
+    if (!dur) return;
+    const t = toT(e), px = s => Math.abs(t - s);
+    drag = px(stOf(it)) <= px(endOf(it, dur)) ? "s" : "e";
+    try { cv.setPointerCapture(e.pointerId); } catch (er) {}
+    e.preventDefault(); move(e);
+  };
+  cv.onpointermove = e => { if (drag) move(e); };
+  cv.onpointerup = cv.onpointercancel = () => { if (!drag) return; drag = null; commit(); };
+  sync();
+}
+function tlDraw() {
+  const t = tlCan; if (!t) return;
+  if (!t.cv.isConnected) return;                          // 아직 화면에 안 붙었으면 다음 틱에
+  const { cv, it } = t, dur = itDur(it), d = A();
+  const dpr = Math.min(2, devicePixelRatio || 1), W = Math.round(cv.clientWidth * dpr), H = Math.round(cv.clientHeight * dpr);
+  if (!W || !H) return;
+  const ph = d.item === it && dur ? d.el.currentTime : -1, pk = wfOf(it);
+  const st = stOf(it), en = endOf(it, dur), xs = xfOf(it), last = items().indexOf(it) >= items().length - 1;
+  const key = [W, H, dur, st, en, xs, it.loop, cls.auto, last, !!pk, ph < 0 ? -1 : Math.round(ph / dur * W)].join("|");
+  if (key === t.key) return; t.key = key;
+  if (cv.width !== W) cv.width = W; if (cv.height !== H) cv.height = H;
+  const g = cv.getContext("2d"); g.clearRect(0, 0, W, H);
+  if (!dur) { g.fillStyle = "#8fa3a0"; g.font = `${12 * dpr}px sans-serif`; g.fillText("곡 길이를 아직 모름", 8 * dpr, H / 2 + 4 * dpr); return; }
+  const bw = Math.max(1, Math.round(2 * dpr)), gap = Math.max(1, Math.round(dpr)), nb = Math.floor(W / (bw + gap)), mid = H / 2;
+  for (let k = 0; k < nb; k++) {
+    const x = k * (bw + gap), tt = (x + bw / 2) / W * dur;
+    const v = pk ? WF_A.indexOf(pk[Math.min(pk.length - 1, Math.floor(tt / dur * pk.length))]) / 61 : 0.25;
+    const h = Math.max(dpr, v * (H - 10 * dpr));
+    g.fillStyle = tt >= st && tt <= en ? "#5eead4cc" : "#ffffff2a";
+    g.fillRect(x, mid - h / 2, bw, h);
+  }
+  const X = s => Math.round(s / dur * W);
+  g.fillStyle = "#00000080"; g.fillRect(0, 0, X(st), H); g.fillRect(X(en), 0, W - X(en), H);   // 잘린 부분 어둡게
+  if (cls.auto && !it.loop && !last && xs > 0 && en - st > xs + 1) { g.fillStyle = "#fbbf7740"; g.fillRect(X(en - xs), 0, X(en) - X(en - xs), H); }
+  [[st, "#a7f3d0"], [en, "#fde2bd"]].forEach(([s, c]) => {     // 손잡이
+    const x = Math.min(W - 2 * dpr, Math.max(0, X(s) - dpr));
+    g.fillStyle = c; g.fillRect(x, 0, 2 * dpr, H);
+    g.fillRect(Math.max(0, Math.min(W - 10 * dpr, x - 4 * dpr)), mid - 9 * dpr, 10 * dpr, 18 * dpr);
+  });
+  if (ph >= 0) { g.fillStyle = "#ffffff"; g.fillRect(Math.min(W - dpr, X(ph)), 0, Math.max(1, Math.round(1.5 * dpr)), H); }
+}
 
 // ================= 수업 경과 시간 (음악이 나오는 동안만 셈) =================
 let classSec = 0, lastT = performance.now();
@@ -1576,6 +1861,7 @@ function ambCfg() {
 const TRIM = { stream: 2.4, rain: 1.8, birds: 3, crickets: 4, frogs: 3, drops: 3, emille: 0.6,
   thunder: 2, waterfall: 0.6, moktak: 1.3, owl: 2.5, bamboo: 3, leafrain: 2, winter: 1.5, heart: 0.55 };   // 소리끼리 크기 맞춤 (실측)
 function startLayer(S, vol) {
+  if (NOAUDIO) return;                                    // 소리를 만들 수 없는 브라우저
   const g = ctx.createGain(); g.gain.value = 0;
   const tg = ctx.createGain(); tg.gain.value = 3 * (TRIM[S.id] || 1); g.connect(tg); tg.connect(ambG);
   if (S.rev) { const sg = ctx.createGain(); sg.gain.value = S.rev; tg.connect(sg); sg.connect(rev); }
@@ -1680,7 +1966,7 @@ $("ambVol").onchange = () => saveCls();
 
 // 끄기 예약: 정한 시간이 지나면 음악·배경 소리를 30초 동안 서서히 끔
 let sleepEnd = 0;
-function sleepSet(ms, msg) { sleepEnd = ms > 0 ? performance.now() + ms : 0; $("sleepLeft").textContent = ""; toast(msg); try { localStorage.setItem("yfp_sleepMin", $("sleepMin").value || ""); } catch (e) {} }
+function sleepSet(ms, msg) { sleepEnd = ms > 0 ? Date.now() + ms : 0; /* 실제 시각 기준 */ $("sleepLeft").textContent = ""; toast(msg); try { localStorage.setItem("yfp_sleepMin", $("sleepMin").value || ""); } catch (e) {} }
 $("sleepSel").onchange = e => {
   const v = e.target.value; $("sleepCustom").hidden = v !== "custom"; $("sleepAtBox").hidden = v !== "at";
   if (v === "custom") { sleepEnd = 0; $("sleepLeft").textContent = ""; $("sleepMin").focus(); return; }
@@ -1700,7 +1986,7 @@ $("sleepAtGo").onclick = () => {                          // 시각 지정: 그 
 try { $("sleepMin").value = localStorage.getItem("yfp_sleepMin") || ""; } catch (e) {}
 setInterval(() => {
   if (!sleepEnd) return;
-  const left = (sleepEnd - performance.now()) / 1000;
+  const left = (sleepEnd - Date.now()) / 1000;
   if (left > 0) { $("sleepLeft").textContent = (left >= 3600 ? `${Math.floor(left / 3600)}시간 ${Math.floor(left % 3600 / 60)}분` : fmt2(left)) + " 남음"; return; }
   sleepEnd = 0; $("sleepSel").value = "0"; $("sleepLeft").textContent = ""; $("sleepCustom").hidden = $("sleepAtBox").hidden = true;
   if (AS) {                                               // 모닝콜이 켜져 있으면: 배경 소리를 끄지 않고 '밤새 아주 작게'로 넘김 (아침에 울리도록 앱을 깨워 둠)
@@ -1826,7 +2112,7 @@ $("alSleepSound").onchange = e => { AL.sleepSound = e.target.value; alSave(); if
 // 밤새 깨어 있기용: Web Audio 와 별도로 아주 작은 소리 파일을 반복 (휴대폰이 '재생 중'으로 인식)
 let keepEl = null;
 function keepAlive(on) {
-  if (!on) { if (keepEl) { keepEl.pause(); keepEl = null; } return; }
+  if (!on) { if (keepEl) { keepEl.pause(); try { URL.revokeObjectURL(keepEl.src); } catch (e) {} keepEl.removeAttribute("src"); keepEl = null; } return; }
   if (keepEl) return;
   const sr = 8000, n = sr * 2, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
   const w = (o, t) => [...t].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
@@ -1876,7 +2162,7 @@ function wakeStop(now) {
 let AS = ls.get("alarmState", null);                    // { at: 알람 시각 ms, phase, sleepEnd }
 function asSave() { ls.set("alarmState", AS); }
 let batt = null;                                         // 충전 상태 (안드로이드 Chrome 만 읽을 수 있음, 아이폰은 못 읽음)
-try { if (navigator.getBattery) navigator.getBattery().then(b => { batt = b; b.addEventListener("chargingchange", alCharge); }); } catch (e) {}
+try { if (navigator.getBattery) navigator.getBattery().then(b => { batt = b; b.addEventListener("chargingchange", alCharge); }).catch(() => {}); } catch (e) {}
 function alCharge() {
   if (!batt || !AS) return;
   $("nCharge").hidden = batt.charging;                    // 밤사이 충전기가 빠지면 경고
@@ -1982,14 +2268,24 @@ async function addFiles(list) {
   const fs = [...list].filter(f => f.type.startsWith("audio/") || /\.(mp3|m4a|aac|wav|ogg|flac|opus)$/i.test(f.name));
   if (!fs.length) { toast("음악 파일(mp3 등)만 넣을 수 있습니다"); return; }
   toast(`${fs.length}곡 넣는 중…`);
+  let ok = 0, bad = 0, full = 0, unk = 0, memOnly = 0;
   for (const f of fs) {
     const id = uid();
-    const dur = await new Promise(r => { const a = new Audio(URL.createObjectURL(f)); a.onloadedmetadata = () => { r(a.duration || 0); URL.revokeObjectURL(a.src); }; a.onerror = () => r(0); });
-    await putFile({ id, name: f.name, blob: f });
-    cls.items.push({ fid: id, name: f.name.replace(/\.[^.]+$/, ""), dur, vol: 1, start: 0, loop: false });
+    const dur = await new Promise(r => {                  // 길이 읽기 (못 읽는 파일·응답 없는 경우도 멈추지 않게)
+      const u = URL.createObjectURL(f), a = new Audio(); let done = false;
+      const end = v => { if (done) return; done = true; clearTimeout(t); URL.revokeObjectURL(u); a.removeAttribute("src"); try { a.load(); } catch (e) {} r(v); };
+      const t = setTimeout(() => end(0), 10000);
+      a.preload = "metadata"; a.onloadedmetadata = () => end(fin(a.duration) ? a.duration : 0); a.onerror = () => end(-1); a.src = u;
+    });
+    if (dur < 0 && f.type && !new Audio().canPlayType(f.type)) { bad++; continue; }   // 이 브라우저가 재생 못 한다고 분명히 말하는 형식만 뺌
+    if (dur < 0) unk++;
+    const pr = await putFile({ id, name: f.name, blob: f });
+    if (!pr) { full++; continue; } if (pr === "mem") memOnly++;
+    cls.items.push({ fid: id, name: f.name.replace(/\.[^.]+$/, ""), dur: Math.max(0, dur), vol: 1, start: 0, loop: false });
+    ok++;
   }
   await saveCls(); render();
-  toast(`${fs.length}곡 추가했습니다`);
+  toast([ok ? `${ok}곡 추가했습니다` : "", bad ? `${bad}개는 이 브라우저에서 재생할 수 없는 형식이라 뺐습니다` : "", full ? `${full}개는 저장 공간이 부족해 넣지 못했습니다` : "", unk ? `${unk}개는 길이를 읽지 못했습니다 (재생이 안 되면 mp3로 바꿔 주세요)` : "", memOnly ? `${memOnly}곡은 이 기기에 저장하지 못해 창을 닫으면 사라집니다 (저장 공간 확인)` : ""].filter(Boolean).join(" · ") || "추가한 곡이 없습니다");
 }
 async function maybeDeleteFile(fid) {                   // 다른 수업에서 안 쓰면 저장소에서도 지움
   const used = classes.some(c => c.items.some(i => i.fid === fid) || (c.amb && (c.amb.fid === fid || (c.amb.files || []).some(f => f.fid === fid))));
@@ -1997,38 +2293,52 @@ async function maybeDeleteFile(fid) {                   // 다른 수업에서 �
 }
 let openItem = null, dragFrom = null;
 function render() {
-  const ul = $("queue"); ul.innerHTML = "";
+  const ul = $("queue"); ul.innerHTML = ""; tlCan = null;
   const its = items();
   its.forEach((it, i) => {
     const li = document.createElement("li");
-    li.className = (i === cur ? "cur " : "") + (openItem === it ? "open" : "");
-    li.draggable = true;
-    li.innerHTML = `<span class="grip" title="끌어서 순서 바꾸기">☰</span><span class="no">${i + 1}</span>
+    const open = openItem === it, miss = !playable(it);
+    li.className = (i === cur ? "cur " : "") + (open ? "open " : "") + (miss ? "miss" : "");
+    li.draggable = !open;                                  // 설정을 펼친 곡은 끌기 대신 파형·입력칸을 씀
+    li.innerHTML = `<span class="grip" title="끌어서 순서 바꾸기" aria-hidden="true">☰</span><span class="no">${i + 1}</span>
       <span class="nm"><b></b><small></small></span>
       <span class="tools">
-        <button class="ibtn lp${it.loop ? " on" : ""}" title="이 곡 반복 (사바아사나 등)">↻</button>
-        <button class="ibtn cfg${openItem === it ? " on" : ""}" title="곡 설정 (볼륨·시작 위치)">⚙</button>
-        <button class="ibtn del" title="목록에서 빼기">✕</button></span>
-      <div class="edit">
-        <label>볼륨 <input type="range" class="ev" min="0" max="1.5" step="0.01"><span class="evl"></span></label>
-        <label>시작 위치 <input type="number" class="es" min="0" step="1"> 초부터</label>
+        <button class="ibtn lp${it.loop ? " on" : ""}" title="이 곡 반복 (사바아사나 등)" aria-label="이 곡 반복" aria-pressed="${!!it.loop}">↻</button>
+        <button class="ibtn cfg${open ? " on" : ""}" title="곡 설정 (볼륨·시작/끝 위치·전환 시간·큐)" aria-label="곡 설정" aria-expanded="${open}">⚙</button>
+        <button class="ibtn del" title="목록에서 빼기" aria-label="목록에서 빼기">✕</button></span>
+      ${open ? `<div class="edit">
+        <label>볼륨 <input type="range" class="ev" min="0" max="1.5" step="0.01" aria-label="이 곡 볼륨"><span class="evl"></span></label>
+        <div class="tl">
+          <canvas class="tlw" title="파형 — 양 끝 손잡이를 끌어 시작·끝 위치를 정합니다"></canvas>
+          <div class="tlr">
+            <label>시작 <input type="text" class="es" inputmode="decimal" placeholder="0:00" aria-label="시작 위치 (분:초)"></label>
+            <button type="button" class="ibtn tin" title="지금 재생 위치를 시작으로">⇤ 지금</button>
+            <label>끝 <input type="text" class="ee" inputmode="decimal" placeholder="곡 끝" aria-label="끝 위치 (분:초, 빈칸 = 곡 끝)"></label>
+            <button type="button" class="ibtn tout" title="지금 재생 위치를 끝으로">지금 ⇥</button>
+          </div>
+          <div class="tlr">
+            <label>다음 곡 전환 <input type="number" class="ex" min="0" max="30" step="1" inputmode="numeric" aria-label="이 곡에서 다음 곡으로 넘어가는 전환 시간 (초, 빈칸 = 수업 기본)"> 초</label>
+            <button type="button" class="ibtn tpre" title="끝 부분부터 들어 보며 전환 지점을 확인">▶ 끝 부분 듣기</button>
+            <button type="button" class="ibtn trs" title="시작·끝·전환 시간을 처음 값으로">되돌리기</button>
+          </div>
+          <small class="tlh"></small>
+        </div>
         <span class="ecues"></span>
-      </div>`;
-    li.querySelector("b").textContent = it.name;
-    const ncue = (it.cues || []).filter(c => c != null).length;
-    li.querySelector("small").textContent = [fmt(it.dur - (it.start || 0)), it.vol !== 1 ? `볼륨 ${Math.round(it.vol * 100)}%` : "", it.start ? `${it.start}초부터` : "", it.loop ? "반복" : "", ncue ? `큐 ${ncue}개` : ""].filter(Boolean).join(" · ");
-    if (openItem === it) {                                 // 곡 설정: 저장된 큐 지우기
+      </div>` : ""}`;
+    li.querySelector("b").textContent = (miss ? "⚠ " : "") + it.name;
+    const ncue = (it.cues || []).filter(c => c != null).length, st0 = stOf(it), en0 = endOf(it, it.dur), trimE = isTrimEnd(it, it.dur);
+    li.querySelector("small").textContent = miss ? (missing.has(it.fid) ? "파일 없음 — 눌러서 다시 연결" : "재생할 수 없는 파일") : [fin(en0) ? fmt(en0 - st0) : "길이 모름",
+      it.vol !== 1 ? `볼륨 ${Math.round(it.vol * 100)}%` : "", st0 || trimE ? `${fmtT(st0)}~${trimE ? fmtT(en0) : "끝"}` : "",
+      fin(it.xf) ? `전환 ${xfOf(it)}초` : "", it.loop ? "반복" : "", ncue ? `큐 ${ncue}개` : ""].filter(Boolean).join(" · ");
+    if (open) {                                            // 곡 설정: 저장된 큐 지우기
       const ec = li.querySelector(".ecues");
-      if (ncue) { ec.append("큐 지우기"); it.cues.forEach((c, k) => { if (c == null) return; const b = document.createElement("button"); b.type = "button"; b.textContent = `${k + 1}  ${fmt(c - (it.start || 0))} ✕`; b.style.borderColor = CUE_C[k]; b.title = `큐 ${k + 1} 지우기`; b.onclick = () => cueClear(it, k); ec.appendChild(b); }); }
+      if (ncue) { ec.append("큐 지우기"); it.cues.forEach((c, k) => { if (c == null) return; const b = document.createElement("button"); b.type = "button"; b.textContent = `${k + 1}  ${fmt(c - st0)} ✕`; b.style.borderColor = CUE_C[k]; b.title = `큐 ${k + 1} 지우기`; b.setAttribute("aria-label", `큐 ${k + 1} 지우기`); b.onclick = () => cueClear(it, k); ec.appendChild(b); }); }
       else ec.textContent = "큐 없음 (재생 중 진행 막대 아래 ＋ 로 저장)";
+      tlSetup(li, it, i);
     }
-    li.onclick = e => { if (e.target.closest(".tools, .edit")) return; playing ? crossTo(i) : startAt(i, 1.5); };
-    li.querySelector(".lp").onclick = () => {
-      it.loop = !it.loop; saveCls();
-      decks.forEach(d => { if (d.item === it) d.el.loop = it.loop; });
-      render();
-    };
-    li.querySelector(".cfg").onclick = () => { openItem = openItem === it ? null : it; render(); };
+    li.onclick = e => { if (e.target.closest(".tools, .edit")) return; if (miss && missing.has(it.fid)) { relinkOne(it); return; } playing ? crossTo(i) : startAt(i, 1.5); };
+    li.querySelector(".lp").onclick = () => { it.loop = !it.loop; saveCls(); applyTrim(it); render(); };
+    li.querySelector(".cfg").onclick = () => { openItem = open ? null : it; render(); };
     li.querySelector(".del").onclick = async () => {
       if (i === cur && playing) { toast("재생 중인 곡은 다른 곡으로 넘긴 뒤 빼세요"); return; }
       its.splice(i, 1);
@@ -2036,14 +2346,14 @@ function render() {
       await saveCls(); maybeDeleteFile(it.fid); render();
     };
     const ev = li.querySelector(".ev"), evl = li.querySelector(".evl");
-    ev.value = it.vol; evl.textContent = Math.round(it.vol * 100) + "%";
-    ev.oninput = () => {
-      it.vol = +ev.value; evl.textContent = Math.round(it.vol * 100) + "%";
-      const d = A(); if (d.item === it && playing && !xfading) ramp(d.g.gain, it.vol, 0.1);
-    };
-    ev.onchange = () => { saveCls(); render(); };
-    const es = li.querySelector(".es"); es.value = it.start || 0;
-    es.onchange = () => { it.start = Math.max(0, Math.min(+es.value || 0, Math.max(0, (it.dur || 1) - 1))); saveCls(); render(); };
+    if (ev) {
+      ev.value = it.vol; evl.textContent = Math.round(it.vol * 100) + "%";
+      ev.oninput = () => {
+        it.vol = +ev.value; evl.textContent = Math.round(it.vol * 100) + "%";
+        const d = A(); if (d.item === it && playing && !xfading) ramp(d.g.gain, it.vol, 0.1);
+      };
+      ev.onchange = () => { saveCls(); render(); };
+    }
     // 끌어서 순서 바꾸기
     li.ondragstart = e => { dragFrom = i; li.classList.add("dragging"); e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", "row"); };
     li.ondragend = () => { li.classList.remove("dragging"); dragFrom = null; };
@@ -2058,11 +2368,11 @@ function render() {
     ul.appendChild(li);
   });
   if (!its.length) ul.innerHTML = '<li style="cursor:default;grid-template-columns:1fr;color:var(--dim)">아직 곡이 없습니다. ＋ 곡 추가를 누르거나 MP3를 끌어다 놓으세요.</li>';
-  const tot = its.reduce((s, it) => s + (it.dur - (it.start || 0)), 0) - Math.max(0, its.length - 1) * (cls.auto ? cls.xf : 0);
+  const tot = its.reduce((s, it, k) => s + (fin(it.dur) && it.dur > 0 ? endOf(it, it.dur) - stOf(it) : 0) - (cls.auto && k < its.length - 1 ? xfOf(it) : 0), 0);
   $("total").textContent = its.length ? `${its.length}곡 · 약 ${Math.max(1, Math.round(tot / 60))}분` : "";
   const it = its[cur];
   $("title").textContent = it ? it.name : (its.length ? "▶ 를 눌러 1번 곡부터 시작" : "곡을 추가해 수업을 준비하세요");
-  const nx = its[cur + 1];
+  const nx = its[nextPlay(cur)];
   $("subline").textContent = it ? (nx ? `다음: ${nx.name}` : "마지막 곡") : (its.length ? `${cls.name} · ${its.length}곡` : "＋ 곡 추가로 MP3를 넣으면 순서대로 재생됩니다");
   if (!it) { $("fill").style.width = "0"; $("tCur").textContent = "0:00"; $("tLeft").textContent = "-0:00"; $("xfMark").hidden = true; }
   msMeta(); cueShow(); wfEnsure(); wfKey = "";
@@ -2124,6 +2434,192 @@ $("classDel").onclick = async () => {
   selectClass(classes[0].id); toast("수업을 지웠습니다");
 };
 
+// ================= 백업 · 복원 (수업 목록 + 설정 → .json, 음원은 작은 것만 선택해서 넣음) =================
+const BK_SKIP = new Set(["yfp_alarmState", "yfp_lastClass", "yfp_seenStart", "yfp_seenHelp"]);
+const BK_FILE_MAX = 20e6, BK_TOTAL_MAX = 150e6;
+const fileRefs = c => [...c.items.map(i => ({ fid: i.fid, name: i.name })), ...((c.amb && c.amb.files) || []).map(f => ({ fid: f.fid, name: f.name })), ...(c.amb && c.amb.fid ? [{ fid: c.amb.fid, name: c.amb.name || "내 파일" }] : [])].filter(r => r.fid);
+async function scanMissing() {                            // 수업이 가리키는데 저장소에 없는 음원
+  const ids = await fileIds(); if (!Array.isArray(ids)) return;
+  const have = new Set(ids); missing.clear();
+  for (const c of classes) for (const r of fileRefs(c)) if (!have.has(r.fid)) missing.add(r.fid);
+}
+function missList() {                                     // [{fid, name, where}] 중복 없이
+  const out = new Map();
+  for (const c of classes) for (const r of fileRefs(c)) if (missing.has(r.fid) && !out.has(r.fid)) out.set(r.fid, { ...r, cls: c.name });
+  return [...out.values()];
+}
+const blobToB64 = b => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1] || ""); r.onerror = () => rej(r.error); r.readAsDataURL(b); });
+function b64ToBlob(b64, type) {
+  const parts = [], CH = 1 << 20;                         // 1MB씩 (4의 배수) 풀어서 메모리 절약
+  for (let i = 0; i < b64.length; i += CH) { const bin = atob(b64.slice(i, i + CH)), u = new Uint8Array(bin.length); for (let j = 0; j < bin.length; j++) u[j] = bin.charCodeAt(j); parts.push(u); }
+  return new Blob(parts, { type: type || "application/octet-stream" });
+}
+const ymd = (d = new Date()) => `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
+async function saveOut(blob, name) {                      // 휴대폰은 공유(파일에 저장·메시지), 안 되면 내려받기
+  try {
+    const f = new File([blob], name, { type: "application/json" });
+    if (MOBILE && navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: name }); return "share"; }
+  } catch (e) { if (e && e.name === "AbortError") return "abort"; }
+  const u = URL.createObjectURL(blob), a = document.createElement("a");
+  a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(u), 60000);
+  return "download";
+}
+async function exportBackup() {
+  const all = document.querySelector("input[name=bkWhat]:checked").value === "all", embed = $("bkEmbed").checked;
+  const list = all ? classes : [cls];
+  const info = $("bkInfo"); info.textContent = "백업 파일을 만드는 중…"; $("bkExport").disabled = true;
+  try {
+    const settings = {};
+    try { for (let k = 0; k < localStorage.length; k++) { const key = localStorage.key(k); if (key && key.startsWith("yfp_") && !BK_SKIP.has(key)) settings[key] = localStorage.getItem(key); } } catch (e) {}
+    const files = {}, datas = [];
+    let total = 0, nEmb = 0, nName = 0;
+    for (const c of list) for (const r of fileRefs(c)) {
+      if (files[r.fid]) continue;
+      const f = await getFile(r.fid);
+      files[r.fid] = { name: (f && f.name) || r.name, size: f && f.blob ? f.blob.size : 0, type: (f && f.blob && f.blob.type) || "" };
+      if (embed && f && f.blob && f.blob.size <= BK_FILE_MAX && total + f.blob.size <= BK_TOTAL_MAX) {
+        total += f.blob.size; nEmb++;
+        files[r.fid].data = `@@YFP_DATA_${datas.length}@@`; datas.push(f.blob);
+      } else nName++;
+    }
+    const doc = { app: "yoga-flow-player", kind: "backup", format: 1, appVer: APP_VER, date: new Date().toISOString(), scope: all ? "all" : "class",
+      classes: JSON.parse(JSON.stringify(list)), settings, files };
+    const txt = JSON.stringify(doc, null, 1), parts = [];
+    let pos = 0;
+    for (let k = 0; k < datas.length; k++) {               // 자리표시를 실제 base64 로 (큰 문자열을 한 번에 만들지 않음)
+      const tok = `@@YFP_DATA_${k}@@`, at = txt.indexOf(tok, pos);
+      parts.push(txt.slice(pos, at), await blobToB64(datas[k])); pos = at + tok.length;
+      info.textContent = `음원 넣는 중… ${k + 1}/${datas.length}`;
+    }
+    parts.push(txt.slice(pos));
+    const blob = new Blob(parts, { type: "application/json" });
+    const safeName = (all ? "모든수업" : cls.name).replace(/[\\/:*?"<>|\s]+/g, "_").slice(0, 40);
+    const how = await saveOut(blob, `YogaFlow_백업_${safeName}_${ymd()}.json`);
+    const mb = blob.size < 1e6 ? Math.max(1, Math.round(blob.size / 1000)) + "KB" : (blob.size / 1e6).toFixed(1) + "MB";
+    info.textContent = how === "abort" ? "저장을 취소했습니다." :
+      `수업 ${list.length}개 · 곡/소리 파일 ${Object.keys(files).length}개 (음원 포함 ${nEmb}개, 이름만 ${nName}개) · ${mb}` + (how === "download" ? " — 내려받기 폴더를 확인하세요." : "");
+    return { blob, how };
+  } catch (e) { errLog.push("export " + e); info.textContent = "백업 파일을 만들지 못했습니다: " + (e && e.message || e); }
+  finally { $("bkExport").disabled = false; }
+}
+const num = (v, d, lo, hi) => (fin(+v) && v !== null && v !== "" ? Math.max(lo, Math.min(hi, +v)) : d);
+function cleanClass(c0) {                                 // 불러온 수업을 안전한 형식으로 (모르는 값·이상한 값 정리)
+  const c = JSON.parse(JSON.stringify(c0));
+  c.id = typeof c.id === "string" && c.id ? c.id : uid();
+  c.name = String(c.name || "불러온 수업").slice(0, 80);
+  c.xf = num(c.xf, 8, 0, 30); c.auto = c.auto !== false;
+  c.items = c.items.filter(i => i && typeof i.fid === "string").map(i => {
+    const o = { ...i, name: String(i.name || "곡").slice(0, 200), dur: num(i.dur, 0, 0, 1e6), vol: num(i.vol, 1, 0, 1.5), start: num(i.start, 0, 0, 1e6), loop: !!i.loop };
+    if (i.end != null) { const e = num(i.end, null, 0, 1e6); if (e != null) o.end = e; else delete o.end; }
+    if (i.xf != null) { const x = num(i.xf, null, 0, 30); if (x != null) o.xf = x; else delete o.xf; }
+    if (Array.isArray(i.cues)) o.cues = i.cues.slice(0, CUE_N).map(v => (fin(v) ? v : null)); else delete o.cues;
+    if (typeof i.wf !== "string") delete o.wf;
+    return o;
+  });
+  if (!c.amb || typeof c.amb !== "object") c.amb = { type: "none", vol: 0.35, on: false };
+  c.amb.on = false;                                       // 불러오자마자 소리가 나지 않게
+  return c;
+}
+async function importBackup(file) {
+  const info = $("bkInfo");
+  let o = null;
+  try { o = JSON.parse(await file.text()); } catch (e) { toast("백업 파일을 읽을 수 없습니다 (.json 파일인지 확인)"); return null; }
+  if (!o || o.app !== "yoga-flow-player" || !Array.isArray(o.classes)) { toast("Yoga Flow Player 백업 파일이 아닙니다"); return null; }
+  info.textContent = "불러오는 중…";
+  const have = new Set((await fileIds()) || []);
+  let emb = 0, keep = 0, fail = 0;
+  for (const [fid, f] of Object.entries(o.files || {})) {
+    if (have.has(fid)) { keep++; continue; }               // 이 기기에 이미 있는 파일은 그대로 씀
+    if (f && typeof f.data === "string" && f.data) {
+      try { if (await putFile({ id: fid, name: String(f.name || "음원"), blob: b64ToBlob(f.data, f.type) })) { emb++; have.add(fid); } else fail++; } catch (e) { fail++; }
+      f.data = null;
+    }
+  }
+  const names = new Set(classes.map(c => c.name)); let first = null, n = 0;
+  for (const c0 of o.classes) {
+    if (!c0 || !Array.isArray(c0.items)) continue;
+    const c = cleanClass(c0);
+    if (classes.some(x => x.id === c.id)) c.id = uid();     // 같은 수업이 있어도 덮어쓰지 않고 따로 추가
+    if (names.has(c.name)) c.name += " (불러옴)"; names.add(c.name);
+    c.created = Date.now() + n++;
+    for (const it of c.items) { const m = o.files && o.files[it.fid]; if (m && m.name) it.srcName = String(m.name); }
+    classes.push(c); await putClass(c); first = first || c;
+  }
+  if (!first) { toast("백업 파일에 수업이 없습니다"); info.textContent = ""; return null; }
+  let setN = 0;
+  if ($("bkSettings").checked && o.settings && typeof o.settings === "object") {
+    for (const [k, v] of Object.entries(o.settings)) if (typeof k === "string" && k.startsWith("yfp_") && !BK_SKIP.has(k) && typeof v === "string") { try { localStorage.setItem(k, v); setN++; } catch (e) {} }
+    applySettings();
+  }
+  await scanMissing();
+  await selectClass(first.id);
+  const ms = missList().length;
+  info.textContent = `수업 ${n}개를 불러왔습니다` + (emb ? ` · 음원 ${emb}개 복원` : "") + (keep ? ` · 이 기기에 있던 파일 ${keep}개 사용` : "") + (setN ? ` · 설정 ${setN}개` : "") + (fail ? ` · 저장 실패 ${fail}개(공간 부족?)` : "") + (ms ? ` · 빠진 파일 ${ms}개 — 아래에서 다시 연결하세요` : "");
+  bkMissShow(); toast(`수업 ${n}개를 불러왔습니다`);
+  return { n, emb, keep, ms };
+}
+function applySettings() {                                // 불러온 설정을 새로 고침 없이 바로 반영
+  setMaster(ls.get("master", 0.9));
+  $("bellType").value = ls.get("bell", "bowl"); $("duck").checked = ls.get("duck", true);
+  $("savBell").checked = ls.get("savBell", true); $("savFade").checked = ls.get("savFade", false);
+  $("savMin").value = ls.get("savMin", 5); if (!savOn) { savLeft = +$("savMin").value * 60; savShow(); }
+  try { $("sleepMin").value = localStorage.getItem("yfp_sleepMin") || ""; } catch (e) {}
+  const mx = ls.get("mixes", []); myMixes = Array.isArray(mx) ? mx.filter(m => m && m.layers && m.name) : [];
+  const al = ls.get("alarm", {}); AL = { ...AL0, ...(al && typeof al === "object" ? al : {}) }; if (!Array.isArray(AL.days)) AL.days = [];
+  alSleepKey = ""; alUI(); renderMixes();
+}
+const normName = s => String(s || "").toLowerCase().replace(/\.[a-z0-9]{1,5}$/, "").replace(/\s+/g, " ").trim();
+async function relinkFile(fid, f) {                       // 고른 파일을 원래 자리(fid)에 저장 → 모든 수업에서 바로 쓰임
+  if (!(await putFile({ id: fid, name: f.name, blob: f }))) return false;
+  missing.delete(fid); badF.delete(fid);
+  if (urls.has(fid)) { URL.revokeObjectURL(urls.get(fid)); urls.delete(fid); }
+  if (running["file:" + fid]) stopLayer("file:" + fid);
+  return true;
+}
+async function relinkMany(fs) {
+  const want = missList(); let ok = 0;
+  const left = [...fs];
+  for (const m of want) {
+    const keys = new Set([normName(m.name)]);
+    for (const c of classes) for (const it of c.items) if (it.fid === m.fid && it.srcName) keys.add(normName(it.srcName));
+    const k = left.findIndex(f => keys.has(normName(f.name)));
+    if (k < 0) continue;
+    if (await relinkFile(m.fid, left[k])) ok++;
+    left.splice(k, 1);
+  }
+  render(); ambApply(); bkMissShow();
+  const rest = missList().length;
+  toast(ok ? `${ok}개를 다시 연결했습니다` + (rest ? ` · 아직 ${rest}개 남음` : "") : "이름이 같은 파일을 찾지 못했습니다 — 목록의 곡을 눌러 하나씩 연결할 수도 있습니다");
+  return ok;
+}
+let relinkTarget = null;                                  // 한 곡만 연결할 때 그 곡
+function relinkOne(it) { relinkTarget = it; const i = $("relinkIn"); i.multiple = false; i.click(); }
+$("relinkIn").onchange = async e => {
+  const fs = [...e.target.files]; e.target.value = ""; if (!fs.length) return;
+  const t = relinkTarget; relinkTarget = null; $("relinkIn").multiple = true;
+  if (t) { if (await relinkFile(t.fid, fs[0])) { toast(`다시 연결했습니다: ${t.name}`); render(); ambApply(); bkMissShow(); } else toast("저장하지 못했습니다 (저장 공간 확인)"); }
+  else await relinkMany(fs);
+};
+function bkMissShow() {
+  const ms = missList(), box = $("bkMissBox");
+  box.hidden = !ms.length; $("bkMissN").textContent = ms.length ? `(${ms.length}개)` : "";
+  const ul = $("bkMissList"); ul.innerHTML = "";
+  ms.slice(0, 200).forEach(m => { const li = document.createElement("li"); li.textContent = `${m.name} — ${m.cls}`; ul.appendChild(li); });
+}
+function bkOpen() {
+  $("bkCurName").textContent = cls.name; $("bkAllN").textContent = `${classes.length}개`;
+  $("bkInfo").textContent = ""; bkMissShow();
+  if (!$("bakDlg").open) $("bakDlg").showModal();
+}
+$("bakBtn").onclick = bkOpen;
+$("bkClose").onclick = () => $("bakDlg").close();
+$("bakDlg").addEventListener("click", e => { if (e.target === $("bakDlg")) $("bakDlg").close(); });
+$("bkExport").onclick = exportBackup;
+$("bkImport").onclick = () => $("bkIn").click();
+$("bkIn").onchange = async e => { const f = e.target.files[0]; e.target.value = ""; if (f) await importBackup(f); };
+$("bkRelink").onclick = () => { relinkTarget = null; const i = $("relinkIn"); i.multiple = true; i.click(); };
+
 // ================= 그 밖 =================
 $("playBtn").onclick = togglePlay;
 $("nextBtn").onclick = $("xfBtn").onclick = next;
@@ -2143,7 +2639,7 @@ function classMode(on) {
   document.body.classList.toggle("class-mode", on); $("modeBtn").classList.toggle("on", on);
   $("modeBtn").lastChild.textContent = on ? "수업 모드 끝내기" : "수업 모드";
   if (on && !document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
-  if (!on && document.fullscreenElement) document.exitFullscreen?.();
+  if (!on && document.fullscreenElement) { try { document.exitFullscreen?.()?.catch?.(() => {}); } catch (e) {} }
 }
 $("modeBtn").onclick = () => classMode(!document.body.classList.contains("class-mode"));
 document.addEventListener("fullscreenchange", () => { if (!document.fullscreenElement && document.body.classList.contains("class-mode")) classMode(false); });
@@ -2162,7 +2658,15 @@ $("startHelp").onclick = () => { $("startDlg").close(); helpOpen(); };
 $("verLine").textContent = `Yoga Flow Player v${APP_VER}`; $("verHelp").textContent = `v${APP_VER} (${APP_DATE})`;
 let lock = null;
 async function wake(on) {                                // 재생 중엔 화면이 꺼지지 않게
-  try { if (on && !lock && navigator.wakeLock) lock = await navigator.wakeLock.request("screen"); else if (!on && lock) { await lock.release(); lock = null; } } catch (e) { lock = null; }
+  wake.want = on;
+  try {
+    if (on && !lock && navigator.wakeLock && document.visibilityState === "visible") {
+      const l = await navigator.wakeLock.request("screen");
+      if (lock || !wake.want) { l.release().catch(() => {}); return; }   // 기다리는 사이 이미 잡았거나 끄라고 했으면
+      lock = l;
+      l.addEventListener?.("release", () => { if (lock === l) lock = null; });   // 기기가 스스로 풀면 다음에 다시 요청
+    } else if (!on && lock) { const l = lock; lock = null; await l.release(); }
+  } catch (e) { lock = null; }
 }
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState !== "visible") return;
@@ -2193,14 +2697,21 @@ addEventListener("keydown", e => {
 // ================= 시작 =================
 (async () => {
   if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js").catch(() => {});
-  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}   // 브라우저가 곡을 지우지 않게 요청
-  db = await openDB();
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {}); } catch (e) {}   // 브라우저가 곡을 지우지 않게 요청
+  db = await openDB(); dbOk = !!db;
   classes = (await allClasses()) || [];
+  classes = classes.filter(c => c && c.id && Array.isArray(c.items));
   classes.sort((a, b) => (a.created || 0) - (b.created || 0));
   if (!classes.length) { const c = newClass("기본 수업"); classes.push(c); await putClass(c); }
   setPlaying(false);
+  await scanMissing();
   await selectClass(ls.get("lastClass", classes[0].id));
   if (!db) toast("이 브라우저에선 곡이 저장되지 않습니다 (창을 닫으면 사라짐)");
+  if (NOAUDIO) {
+    const n = document.createElement("div"); n.className = "al-miss"; n.setAttribute("role", "status"); n.style.margin = "0 0 12px";
+    n.textContent = "이 브라우저는 소리 처리 기능(Web Audio)이 없어 부드러운 전환·배경 소리·싱잉볼이 동작하지 않습니다. 아이폰 Safari·Chrome·Edge 최신 버전에서 열어 주세요.";
+    document.querySelector(".grid").before(n);
+  }
   alUI(); alCheckMissed();
   if (!ls.get("seenStart", false)) { ls.set("seenStart", true); ls.set("seenHelp", true); $("startDlg").showModal(); }   // 처음 한 번만
   tick();
