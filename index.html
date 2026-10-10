@@ -64,36 +64,6 @@
   .grid > *, .tools3 > *, .card, .now, .prog, .queue li, .queue .nm { min-width: 0; max-width: 100%; }
   html, body { overflow-x: hidden; }
   .title { width: 100%; }
-  @media (max-width: 600px) {
-    .wrap { padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); }
-    input, select, textarea { font-size: 16px !important; }     /* iOS: 16px 미만이면 누를 때 화면이 확대됨 */
-    .card { padding: 14px; border-radius: 16px; }
-    .now { padding: 20px 14px; gap: 12px; }
-    .orb { width: 150px; height: 150px; } .orb .core { width: 96px; height: 96px; } .orb .core b { font-size: 22px; }
-    .title { font-size: 18px; }
-    .ctrl { gap: 10px; } .cbtn { width: 52px; height: 52px; } .cbtn.big { width: 74px; height: 74px; }
-    .abtn { padding: 10px 12px; font-size: 13px; } .abtn kbd, .keys { display: none; }
-    header .chip { width: 100%; } header .chip select { flex: 1; min-width: 0; }
-    .queue li { grid-template-columns: 18px 24px minmax(0, 1fr) auto; gap: 6px; padding: 8px; }
-    .queue .tools .ibtn { opacity: 1; }
-    .queue .edit input[type=range] { width: 90px; }
-    .amb-head input[type=range] { width: 90px; }
-    .amb-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .snd { padding: 10px; } .snd .t { font-size: 13px; }
-    /* 수업 모드(휴대폰): 한 화면에 큰 버튼만 */
-    body.class-mode header .chip, body.class-mode #helpBtn, body.class-mode .logo small, body.class-mode .tools3 { display: none; }
-    body.class-mode header { margin-bottom: 10px; }
-    body.class-mode .now { min-height: calc(100dvh - 86px); justify-content: space-evenly; padding: 14px 12px; gap: 10px; }
-    body.class-mode .orb { width: 170px; height: 170px; } body.class-mode .orb .core { width: 112px; height: 112px; }
-    body.class-mode .title { font-size: 22px; }
-    body.class-mode .cbtn { width: 68px; height: 68px; } body.class-mode .cbtn.big { width: 104px; height: 104px; }
-    body.class-mode .actions { display: grid; grid-template-columns: 1fr 1fr; width: 100%; gap: 10px; }
-    body.class-mode .abtn { justify-content: center; padding: 18px 8px; font-size: 17px; border-radius: 16px; }
-    body.class-mode .abtn.next { grid-column: 1 / -1; padding: 20px 8px; font-size: 18px; }
-    body.class-mode .vol { max-width: none; }
-    body.class-mode .vol input[type=range] { height: 8px; }
-    body.class-mode .vol input[type=range]::-webkit-slider-thumb { width: 26px; height: 26px; }
-  }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 18px; backdrop-filter: blur(12px); }
   .card h3 { margin: 0 0 12px; font-size: 14px; font-weight: 600; color: var(--dim); letter-spacing: .2px; display: flex; align-items: center; gap: 8px; }
   .card h3 .sp { flex: 1; }
@@ -275,8 +245,9 @@
   .night .wake .up { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #1c1003; }
   .night .wake .snz { background: #ffffff18; color: #fde2bd; font-size: 17px; font-weight: 500; }
   .toast {
-    position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px); padding: 10px 16px; border-radius: 12px;
-    background: #0b1113ee; border: 1px solid var(--line); font-size: 14px; opacity: 0; transition: .25s; pointer-events: none; z-index: 10;
+    position: fixed; left: 50%; bottom: max(24px, calc(env(safe-area-inset-bottom) + 12px)); transform: translateX(-50%) translateY(20px); padding: 10px 16px; border-radius: 12px;
+    background: #0b1113ee; border: 1px solid var(--line); font-size: 14px; opacity: 0; transition: .25s; pointer-events: none; z-index: 60;
+    width: max-content; max-width: calc(100vw - 32px); text-align: center; line-height: 1.45;
   }
   .toast.show { opacity: 1; transform: translateX(-50%); }
   kbd { font: inherit; font-size: 11px; padding: 1px 6px; border-radius: 5px; border: 1px solid #ffffff22; background: #ffffff0d; color: #c9d6d3; }
@@ -288,6 +259,51 @@
   dialog .btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
   .help { color: var(--dim); font-size: 13px; line-height: 1.7; }
   .help b { color: var(--text); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .ibtn:focus:not(:focus-visible), .snd:focus:not(:focus-visible) { outline: none; }
+
+  /* 파형 · 큐 */
+  .wave { display: block; width: 100%; height: 46px; margin-bottom: 8px; cursor: pointer; touch-action: manipulation; }
+  .wave[hidden] { display: none; }
+  .bar::before { content: ""; position: absolute; left: 0; right: 0; top: -10px; bottom: -10px; }   /* 손가락으로 누르기 쉽게 */
+  .bar .cm { position: absolute; top: -3px; bottom: -3px; width: 3px; border-radius: 2px; transform: translateX(-50%); pointer-events: none; }
+  .cues { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; width: 100%; }
+  .cues[hidden] { display: none; }
+  .cue { min-width: 66px; height: 40px; padding: 0 12px; border-radius: 12px; border: 1px dashed #ffffff2a; background: #ffffff06; color: var(--dim);
+    font-size: 13px; cursor: pointer; font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; gap: 6px; justify-content: center;
+    user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: manipulation; }
+  .cue:hover { background: #ffffff12; }
+  .cue i { font-style: normal; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 700; color: #062b28; background: var(--c); opacity: .45; }
+  .cue.set { border-style: solid; border-color: color-mix(in srgb, var(--c) 55%, transparent); background: color-mix(in srgb, var(--c) 12%, transparent); color: var(--text); }
+  .cue.set i { opacity: 1; }
+  .queue .ecues { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .queue .ecues button { height: 26px; padding: 0 8px; border-radius: 8px; border: 1px solid var(--line); background: #ffffff0a; cursor: pointer; font-size: 12px; }
+  .queue .ecues button:hover { background: #ef444433; color: #fca5a5; }
+
+  /* 설명서 · 처음 사용 */
+  #helpDlg { width: min(680px, calc(100vw - 20px)); max-height: calc(100dvh - 20px); padding: 0; overflow: hidden; }
+  #helpDlg[open] { display: flex; flex-direction: column; }
+  .hd-top { display: flex; align-items: center; gap: 10px; padding: 16px 18px 10px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .hd-top h4 { margin: 0; margin-right: auto; }
+  .hd-nav { display: flex; gap: 6px; flex-wrap: wrap; width: 100%; }
+  .hd-nav button { padding: 6px 11px; border-radius: 999px; border: 1px solid var(--line); background: #ffffff08; cursor: pointer; font-size: 13px; }
+  .hd-nav button:hover { background: #5eead41a; color: var(--accent2); }
+  .hd-body { overflow: auto; padding: 4px 18px 18px; -webkit-overflow-scrolling: touch; }
+  .hd-body:focus { outline: none; }
+  .hd-body h5 { margin: 18px 0 6px; font-size: 15px; color: var(--accent2); scroll-margin-top: 8px; }
+  .hd-body ol, .hd-body ul { margin: 4px 0; padding-left: 20px; }
+  .hd-body li { margin: 3px 0; }
+  .hd-body .tip { margin: 8px 0; padding: 8px 12px; border-radius: 10px; background: #fbbf7714; border: 1px solid #fbbf7744; color: #fde2bd; }
+  .hd-body table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  .hd-body td { padding: 5px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .hd-body td:first-child { white-space: nowrap; width: 1%; }
+  #startDlg { width: min(460px, calc(100vw - 24px)); }
+  .steps { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .steps li { display: flex; gap: 12px; align-items: flex-start; color: var(--dim); font-size: 14px; line-height: 1.6; }
+  .steps li > span { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: #062b28; display: grid; place-items: center; font-weight: 700; font-size: 14px; }
+  .steps b { color: var(--text); }
+  .foot { margin-top: 10px; text-align: center; font-size: 12px; color: #8fa3a099; }
+  .foot button { background: none; border: none; color: var(--dim); text-decoration: underline; cursor: pointer; font-size: 12px; padding: 4px; }
 
   /* 수업 모드 (전체 화면, 큰 버튼) */
   body.class-mode .grid { grid-template-columns: 1fr; }
@@ -297,6 +313,43 @@
   body.class-mode .title { font-size: 28px; }
   body.class-mode .cbtn.big { width: 110px; height: 110px; }
   body.class-mode .abtn { padding: 16px 22px; font-size: 17px; }
+  body.class-mode .cue { height: 52px; min-width: 84px; font-size: 16px; border-radius: 14px; }
+  body.class-mode .wave { height: 58px; }
+  body.class-mode .foot { display: none; }
+  /* 휴대폰 (맨 끝에 둬야 위 규칙을 덮어씀) */
+  @media (max-width: 600px) {
+    .wrap { padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); }
+    input, select, textarea { font-size: 16px !important; }     /* iOS: 16px 미만이면 누를 때 화면이 확대됨 */
+    .card { padding: 14px; border-radius: 16px; }
+    .now { padding: 20px 14px; gap: 12px; }
+    .orb { width: 150px; height: 150px; } .orb .core { width: 96px; height: 96px; } .orb .core b { font-size: 22px; }
+    .title { font-size: 18px; }
+    .ctrl { gap: 10px; } .cbtn { width: 52px; height: 52px; } .cbtn.big { width: 74px; height: 74px; }
+    .abtn { padding: 10px 12px; font-size: 13px; } .abtn kbd, .keys { display: none; }
+    header .chip { width: 100%; } header .chip select { flex: 1; min-width: 0; }
+    .queue li { grid-template-columns: 18px 24px minmax(0, 1fr) auto; gap: 6px; padding: 8px; }
+    .queue .tools .ibtn { opacity: 1; }
+    .queue .edit input[type=range] { width: 90px; }
+    .amb-head input[type=range] { width: 90px; }
+    .amb-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .snd { padding: 10px; } .snd .t { font-size: 13px; }
+    /* 수업 모드(휴대폰): 한 화면에 큰 버튼만 */
+    body.class-mode header .chip, body.class-mode #helpBtn, body.class-mode .logo small, body.class-mode .tools3 { display: none; }
+    body.class-mode header { margin-bottom: 10px; }
+    body.class-mode .now { min-height: calc(100dvh - 86px); justify-content: space-evenly; padding: 14px 12px; gap: 10px; }
+    body.class-mode .orb { width: 170px; height: 170px; } body.class-mode .orb .core { width: 112px; height: 112px; }
+    body.class-mode .title { font-size: 22px; }
+    body.class-mode .cbtn { width: 68px; height: 68px; } body.class-mode .cbtn.big { width: 104px; height: 104px; }
+    body.class-mode .actions { display: grid; grid-template-columns: 1fr 1fr; width: 100%; gap: 10px; }
+    body.class-mode .abtn { justify-content: center; padding: 18px 8px; font-size: 17px; border-radius: 16px; }
+    body.class-mode .abtn.next { grid-column: 1 / -1; padding: 20px 8px; font-size: 18px; }
+    .cue { min-width: 0; flex: 1 1 0; padding: 0 6px; }
+    body.class-mode .cue { min-width: 0; height: 50px; }
+    body.class-mode .vol { max-width: none; }
+    @media (max-width: 360px) { header .chip { gap: 4px; padding-left: 10px; } header .chip .ibtn { min-width: 30px; padding: 0 6px; } }
+    body.class-mode .vol input[type=range] { height: 8px; }
+    body.class-mode .vol input[type=range]::-webkit-slider-thumb { width: 26px; height: 26px; }
+  }
 </style>
 </head>
 <body>
@@ -316,7 +369,7 @@
     </div>
     <button class="ibtn" id="modeBtn" title="수업 모드 — 큰 버튼 전체 화면 (Z)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>수업 모드</button>
-    <button class="ibtn" id="helpBtn" title="사용법">?</button>
+    <button class="ibtn" id="helpBtn" title="사용 설명서">? 설명서</button>
   </header>
 
   <div class="grid">
@@ -324,11 +377,13 @@
       <div class="orb"><div class="ring" id="ring"></div><div class="ring2"></div>
         <div class="core"><div><span>수업 경과</span><b id="classTime">00:00</b></div></div></div>
       <div class="title" id="title">곡을 추가해 수업을 준비하세요</div>
-      <div class="sub" id="subline">오른쪽에 MP3를 끌어다 놓으면 순서대로 재생됩니다</div>
+      <div class="sub" id="subline">＋ 곡 추가로 MP3를 넣으면 순서대로 재생됩니다</div>
       <div class="prog">
+        <canvas class="wave" id="wave" hidden title="파형 — 누르면 그 위치로"></canvas>
         <div class="bar" id="bar"><div class="fill" id="fill"></div><div class="xf" id="xfMark" hidden title="이 지점부터 다음 곡으로 넘어감"></div></div>
         <div class="times"><span id="tCur">0:00</span><span id="tLeft">-0:00</span></div>
       </div>
+      <div class="cues" id="cues" hidden role="group" aria-label="큐 (곡 안의 위치 표시)"></div>
       <div class="ctrl">
         <button class="cbtn" id="prevBtn" title="이전 곡 (←)"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 6h2v12H7zM19 6v12l-9-6z"/></svg></button>
         <button class="cbtn big" id="playBtn" title="재생 / 일시정지 — 부드럽게 (Space)"></button>
@@ -341,7 +396,7 @@
       </div>
       <div class="vol">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/></svg>
-        <input type="range" id="master" min="0" max="1" step="0.01" value="0.9" title="전체 볼륨 (↑↓)">
+        <input type="range" id="master" aria-label="전체 볼륨" min="0" max="1" step="0.01" value="0.9" title="전체 볼륨 (↑↓)">
         <span id="masterLbl" style="width:36px;text-align:right">90%</span>
       </div>
     </section>
@@ -351,10 +406,10 @@
         <button class="ibtn" id="addBtn">＋ 곡 추가</button></h3>
       <div class="opts">
         <label>전환 시간 <input type="number" id="xfSec" min="0" max="30" step="1"> 초</label>
-        <label class="switch" title="곡이 끝나기 전에 자동으로 다음 곡으로 넘어감"><input type="checkbox" id="autoNext"><span></span></label><span>자동으로 다음 곡</span>
+        <label class="switch" title="곡이 끝나기 전에 자동으로 다음 곡으로 넘어감"><input type="checkbox" id="autoNext" aria-label="자동으로 다음 곡"><span></span></label><span>자동으로 다음 곡</span>
       </div>
       <ul class="queue" id="queue"></ul>
-      <div class="drop" id="drop">MP3를 여기로 끌어다 놓거나 눌러서 고르세요 · 순서는 ☰ 를 끌어서 바꿉니다</div>
+      <div class="drop" id="drop" role="button" tabindex="0">여기를 눌러 MP3를 고르거나 끌어다 놓으세요 · 순서는 ☰ 를 끌어서 바꿉니다</div>
       <input type="file" id="fileIn" accept="audio/*,.mp3,.m4a,.wav,.ogg,.flac" multiple hidden>
     </section>
   </div>
@@ -364,12 +419,12 @@
       <h3>사바아사나 타이머</h3>
       <div class="big-t" id="savT">05:00</div>
       <div class="row" style="margin-top:8px">
-        <input type="number" id="savMin" min="1" max="60" value="5" style="width:64px"> 분
+        <input type="number" id="savMin" min="1" max="60" value="5" style="width:64px" aria-label="사바아사나 분"> 분
         <button class="ibtn" id="savBtn"><span id="savLbl">시작</span> <kbd>S</kbd></button>
         <button class="ibtn" id="savReset">초기화</button>
       </div>
-      <div class="row"><label class="switch"><input type="checkbox" id="savBell" checked><span></span></label> 끝나면 싱잉볼 3번</div>
-      <div class="row"><label class="switch"><input type="checkbox" id="savFade"><span></span></label> 타이머 동안 음악 볼륨 낮추기 (60%)</div>
+      <div class="row"><label class="switch"><input type="checkbox" id="savBell" checked aria-label="끝나면 싱잉볼 3번"><span></span></label> 끝나면 싱잉볼 3번</div>
+      <div class="row"><label class="switch"><input type="checkbox" id="savFade" aria-label="타이머 동안 음악 볼륨 낮추기"><span></span></label> 타이머 동안 음악 볼륨 낮추기 (60%)</div>
     </section>
 
     <section class="card">
@@ -382,7 +437,7 @@
         </select>
         <button class="ibtn" id="bellTest">들어보기</button>
       </div>
-      <div class="row"><label class="switch"><input type="checkbox" id="duck" checked><span></span></label> 종이 울릴 때 음악 살짝 낮추기</div>
+      <div class="row"><label class="switch"><input type="checkbox" id="duck" checked aria-label="종이 울릴 때 음악 살짝 낮추기"><span></span></label> 종이 울릴 때 음악 살짝 낮추기</div>
       <div class="row"><span>수업 경과 시간</span><button class="ibtn" id="classReset">0으로</button></div>
     </section>
   </div>
@@ -390,8 +445,8 @@
   <section class="card amb" id="ambCard">
     <div class="amb-head">
       <h3>배경 소리</h3>
-      <label class="switch" title="배경 소리 전체 켜기·끄기 (A)"><input type="checkbox" id="ambOn"><span></span></label>
-      <span>전체 볼륨</span><input type="range" id="ambVol" min="0" max="1" step="0.01" value="0.6">
+      <label class="switch" title="배경 소리 전체 켜기·끄기 (A)"><input type="checkbox" id="ambOn" aria-label="배경 소리 켜기"><span></span></label>
+      <span>전체 볼륨</span><input type="range" id="ambVol" aria-label="배경 소리 전체 볼륨" min="0" max="1" step="0.01" value="0.6">
       <span class="sp"></span>
       <span>끄기 예약</span>
       <select id="sleepSel" title="정한 시간이 지나면 음악과 배경 소리를 30초 동안 서서히 끔">
@@ -452,22 +507,123 @@
 
   <div class="keys">
     <kbd>Space</kbd> 재생·멈춤 (부드럽게) &nbsp; <kbd>N</kbd>/<kbd>→</kbd> 다음 곡 전환 &nbsp; <kbd>←</kbd> 이전 곡 &nbsp; <kbd>F</kbd> 서서히 끄기 &nbsp;
-    <kbd>B</kbd> 싱잉볼 &nbsp; <kbd>S</kbd> 사바아사나 타이머 &nbsp; <kbd>A</kbd> 배경 소리 &nbsp; <kbd>↑</kbd><kbd>↓</kbd> 볼륨 &nbsp; <kbd>Z</kbd> 수업 모드
+    <kbd>B</kbd> 싱잉볼 &nbsp; <kbd>S</kbd> 사바아사나 타이머 &nbsp; <kbd>A</kbd> 배경 소리 &nbsp; <kbd>↑</kbd><kbd>↓</kbd> 볼륨 &nbsp; <kbd>Z</kbd> 수업 모드 &nbsp; <kbd>1</kbd>~<kbd>4</kbd> 큐
   </div>
+  <div class="foot"><span id="verLine">Yoga Flow Player</span> · <button id="footHelp">사용 설명서</button></div>
 </div>
 
 <dialog id="dlg"><h4 id="dlgT"></h4><input type="text" id="dlgIn"><div class="btns"><button class="ibtn" id="dlgNo">취소</button><button class="ibtn on" id="dlgOk">확인</button></div></dialog>
-<dialog id="helpDlg">
-  <h4>사용법</h4>
-  <div class="help">
-    <p><b>1. 수업 준비</b> — 위에서 수업을 만들고(예: 월요일 빈야사), 오른쪽에 곡을 끌어다 놓습니다. 곡과 순서는 이 PC 브라우저에 저장되어 다음 수업에 그대로 열립니다.</p>
-    <p><b>2. 수업 중</b> — <b>다음 곡으로 전환(N)</b>을 누르면 지금 곡이 작아지면서 다음 곡이 커집니다. 전환 시간은 오른쪽에서 정합니다(기본 8초).</p>
-    <p><b>3. 자연스럽게 시작·멈춤</b> — 재생·멈춤도 1~2초 동안 부드럽게 바뀝니다. 수업을 끝낼 땐 <b>서서히 끄기(F)</b>.</p>
-    <p><b>4. 곡마다 설정</b> — 곡의 ⚙ 에서 볼륨(곡마다 소리 크기 맞추기)과 시작 위치(앞부분 건너뛰기), ↻ 로 반복(사바아사나 동안 한 곡 계속)을 정합니다.</p>
-    <p><b>5. 사바아사나</b> — 타이머를 시작하면 끝날 때 싱잉볼이 3번 울립니다.</p>
-    <p class="muted">팁: 수업 모드(Z)는 버튼이 커져서 매트 위에서 태블릿·노트북으로 누르기 좋습니다. 재생 중엔 화면이 꺼지지 않게 합니다.</p>
+<dialog id="helpDlg" aria-labelledby="helpTitle">
+  <div class="hd-top">
+    <h4 id="helpTitle">사용 설명서</h4>
+    <button class="ibtn" id="helpX" title="닫기" aria-label="닫기">✕</button>
+    <nav class="hd-nav" aria-label="설명서 차례">
+      <button data-go="h-ready">수업 준비</button><button data-go="h-class">수업 중</button><button data-go="h-cue">큐·파형</button>
+      <button data-go="h-amb">배경 소리</button><button data-go="h-sleep">끄기 예약</button><button data-go="h-alarm">모닝콜</button>
+      <button data-go="h-phone">휴대폰·아이폰</button><button data-go="h-keys">단축키</button><button data-go="h-about">정보</button>
+    </nav>
   </div>
-  <div class="btns"><button class="ibtn on" id="helpOk">확인</button></div>
+  <div class="hd-body help" tabindex="-1" autofocus>
+    <h5 id="h-ready">1. 수업 준비</h5>
+    <ol>
+      <li>맨 위 <b>수업</b>에서 <b>＋</b>를 눌러 수업을 만듭니다 (예: 월요일 빈야사). 수업마다 곡 목록·배경 소리가 따로 저장됩니다. ✎ 이름 바꾸기, ⧉ 복제, 🗑 삭제.</li>
+      <li><b>＋ 곡 추가</b>를 누르거나 MP3를 끌어다 놓습니다. 여러 곡을 한 번에 넣을 수 있습니다.</li>
+      <li>순서는 곡 왼쪽의 <b>☰</b>를 끌어서 바꿉니다.</li>
+      <li>곡의 <b>⚙</b>에서 <b>볼륨</b>(곡마다 소리 크기 맞추기)과 <b>시작 위치</b>(앞부분 건너뛰기)를 정하고, <b>↻</b>로 한 곡 <b>반복</b>(사바아사나 등)을 켭니다.</li>
+      <li><b>전환 시간</b>(기본 8초)은 곡이 겹치며 넘어가는 시간입니다. <b>자동으로 다음 곡</b>을 켜 두면 곡이 끝나기 전에 알아서 넘어갑니다. 진행 막대의 주황 점선이 넘어가기 시작하는 지점입니다.</li>
+    </ol>
+    <div class="tip">곡은 이 기기의 브라우저 안에 저장됩니다 (인터넷으로 올라가지 않음). 다른 기기에서는 곡을 다시 넣어야 합니다.</div>
+
+    <h5 id="h-class">2. 수업 중</h5>
+    <ul>
+      <li><b>▶ 재생·멈춤</b> — 1~2초 동안 부드럽게 커지고 작아집니다.</li>
+      <li><b>다음 곡으로 전환 (N)</b> — 지금 곡이 작아지면서 다음 곡이 커집니다. 목록에서 곡을 눌러도 그 곡으로 부드럽게 넘어갑니다.</li>
+      <li><b>이전 곡 (←)</b> — 5초 넘게 들었으면 이 곡 처음으로, 아니면 앞 곡으로.</li>
+      <li><b>서서히 끄기 (F)</b> — 수업을 마칠 때 6초 동안 줄이며 끕니다.</li>
+      <li><b>싱잉볼 (B)</b> — 소리 파일 없이 만드는 종소리입니다. 싱잉볼·차임·팅샤 중 고르고, 울리는 동안 음악을 살짝 낮출 수 있습니다.</li>
+      <li><b>사바아사나 타이머 (S)</b> — 정한 시간이 끝나면 싱잉볼이 3번 울립니다. 타이머 동안 음악을 60%로 낮출 수도 있습니다.</li>
+      <li><b>수업 모드 (Z)</b> — 버튼이 커지고 화면이 꺼지지 않습니다. 매트 위에서 휴대폰·태블릿으로 누르기 좋습니다.</li>
+      <li>가운데 원의 <b>수업 경과</b>는 음악이 나오는 동안만 셉니다. ‘싱잉볼 · 수업 시간’ 칸에서 0으로 돌립니다.</li>
+    </ul>
+
+    <h5 id="h-cue">3. 큐 버튼 · 파형</h5>
+    <ul>
+      <li>곡을 재생하면 진행 막대 아래에 <b>큐 버튼 4개</b>가 나옵니다. 곡 안의 원하는 위치를 기억해 두었다가 바로 갈 수 있습니다 (예: 후렴, 조용해지는 부분).</li>
+      <li><b>빈 큐</b>를 누르면 → 지금 위치가 저장됩니다.</li>
+      <li><b>저장된 큐</b>를 누르면 → 그 위치로 부드럽게 이동합니다 (멈춘 상태면 그 위치부터 재생).</li>
+      <li>저장된 큐를 <b>길게 누르면</b>(컴퓨터는 Shift+클릭) 지금 위치로 다시 저장합니다. 지우기는 곡의 <b>⚙</b>에서 합니다.</li>
+      <li>키보드: <b>1~4</b> 큐로 이동(비었으면 저장), <b>Shift+1~4</b> 다시 저장.</li>
+      <li>큐는 수업 목록에 곡마다 저장됩니다.</li>
+      <li><b>파형</b>은 곡을 처음 재생할 때 한 번 분석해서 그립니다 (그다음부터는 바로 보임). 파형을 누르면 그 위치로 이동합니다.</li>
+    </ul>
+
+    <h5 id="h-amb">4. 배경 소리</h5>
+    <ul>
+      <li>빗소리·파도·시냇물·새소리·싱잉볼 명상·432Hz 등 <b>27가지</b> 소리를 이 앱이 직접 만들어 냅니다 (파일 필요 없음). 음악 아래에 깔리고, 곡이 바뀌어도 끊기지 않습니다.</li>
+      <li>소리 카드를 누르면 켜지고 다시 누르면 꺼집니다. <b>여러 개를 함께 켜서 섞을 수</b> 있고, 카드마다 볼륨을 따로 조절합니다.</li>
+      <li><b>믹스</b> 버튼을 누르면 미리 만든 조합으로 서서히 바뀝니다. 마음에 드는 조합은 <b>＋ 지금 조합 저장</b>으로 ‘내 믹스’가 됩니다.</li>
+      <li><b>내 소리 추가</b>로 가지고 있는 소리 파일(mp3·wav)을 반복 재생할 수 있습니다. ⇄ 다른 파일로 바꾸기, ✕ 지우기.</li>
+      <li>스위치(<b>A</b>)로 배경 소리 전체를 켜고 끄며, 옆의 막대로 전체 크기를 정합니다.</li>
+    </ul>
+
+    <h5 id="h-sleep">5. 끄기 예약</h5>
+    <ul>
+      <li>배경 소리 칸의 <b>끄기 예약</b>에서 10~90분, <b>직접 입력(분)</b>, <b>시각 지정</b>(예: 23:30, 이미 지났으면 다음 날) 중 고릅니다. 직접 입력·시각 지정은 <b>설정</b>을 눌러야 시작됩니다.</li>
+      <li>시간이 되면 음악과 배경 소리가 <b>30초 동안 서서히</b> 꺼집니다. 남은 시간이 옆에 표시됩니다.</li>
+      <li><b>모닝콜이 켜져 있으면</b> 배경 소리를 끄지 않고 ‘밤새 아주 작게’로 줄입니다 (아침에 깨우려면 앱이 깨어 있어야 하기 때문).</li>
+    </ul>
+
+    <h5 id="h-alarm">6. 모닝콜</h5>
+    <ol>
+      <li>기상 시각과 반복 요일, 깨우는 소리, 잠들기 소리를 고르고 <b>🌙 잠들기 시작</b>을 누릅니다 (충전기를 꽂은 상태에서).</li>
+      <li>잠들기 소리가 정한 시간(5~60분) 동안 나오다가 <b>아주 작게 줄어 밤새</b> 이어집니다. 앱은 꺼지지 않고 작은 소리를 내며 기다립니다.</li>
+      <li>기상 시각 5~15분 전부터 깨우는 소리가 해 뜨듯 커지고, 기상 시각에 종이 울립니다. <b>일어났어요</b>를 누를 때까지 2분마다 조금씩 커지며, <b>5분 더</b>를 누르면 5분 뒤 다시 깨웁니다.</li>
+    </ol>
+    <div class="tip">앱을 닫거나(위로 밀어 종료) 다른 음악 앱을 틀면 아침에 울리지 않습니다. 휴대폰 기본 알람만큼 확실하지 않으니 <b>중요한 날은 기본 알람도</b> 함께 맞춰 두세요.</div>
+
+    <h5 id="h-phone">7. 휴대폰 · 아이폰에서</h5>
+    <ul>
+      <li><b>홈 화면에 추가</b>하면 앱처럼 쓸 수 있습니다. 아이폰: Safari 아래 <b>공유(□↑) → 홈 화면에 추가</b>. 안드로이드: Chrome 메뉴(⋮) → <b>홈 화면에 추가</b>/<b>앱 설치</b>. 홈 화면에 추가해 두면 곡이 지워질 걱정도 줄어듭니다.</li>
+      <li><b>화면이 꺼져도</b> 음악·자동 다음 곡·배경 소리·싱잉볼·타이머가 계속됩니다. 잠금 화면에서 곡 이름을 보고 다음 곡으로 넘길 수 있습니다.</li>
+      <li>그래도 <b>수업 중에는 앱을 화면에 띄워 두는 것</b>이 가장 확실합니다. 수업 모드를 켜면 화면이 꺼지지 않습니다.</li>
+      <li><b>다른 음악·영상 앱을 틀거나 전화가 오면</b> 소리가 멈출 수 있습니다. 앱으로 돌아와 ▶를 누르세요. 수업 전에 <b>방해 금지 모드</b>를 켜 두면 좋습니다.</li>
+      <li>아이폰 옆의 <b>무음 스위치</b>가 켜져 있으면 iOS 버전에 따라 소리가 안 날 수 있습니다. 소리가 안 나면 무음을 풀고 볼륨 버튼을 올려 보세요.</li>
+      <li>앱을 처음 열었을 때는 화면을 한 번 눌러야 소리가 납니다 (휴대폰 규칙).</li>
+      <li>저전력 모드에서는 화면이 꺼진 뒤 동작이 느려질 수 있습니다. 긴 수업·모닝콜은 충전기를 꽂아 두세요.</li>
+      <li>블루투스 스피커를 쓸 때는 연결한 뒤에 앱에서 재생하세요.</li>
+    </ul>
+
+    <h5 id="h-keys">8. 단축키 (키보드)</h5>
+    <table>
+      <tr><td><kbd>Space</kbd></td><td>재생·멈춤 (부드럽게)</td></tr>
+      <tr><td><kbd>N</kbd> <kbd>→</kbd></td><td>다음 곡으로 전환</td></tr>
+      <tr><td><kbd>←</kbd></td><td>이전 곡 / 이 곡 처음으로</td></tr>
+      <tr><td><kbd>F</kbd></td><td>서서히 끄기</td></tr>
+      <tr><td><kbd>B</kbd></td><td>싱잉볼</td></tr>
+      <tr><td><kbd>S</kbd></td><td>사바아사나 타이머 시작·일시정지</td></tr>
+      <tr><td><kbd>A</kbd></td><td>배경 소리 켜기·끄기</td></tr>
+      <tr><td><kbd>↑</kbd> <kbd>↓</kbd></td><td>전체 볼륨</td></tr>
+      <tr><td><kbd>1</kbd>~<kbd>4</kbd></td><td>큐로 이동 (비었으면 저장) · <kbd>Shift</kbd>+숫자 = 다시 저장</td></tr>
+      <tr><td><kbd>Z</kbd></td><td>수업 모드</td></tr>
+    </table>
+
+    <h5 id="h-about">9. 정보</h5>
+    <p><b>Yoga Flow Player</b> <span id="verHelp"></span> — 요가 수업 음악 전환 플레이어.<br>
+      곡·수업 목록·설정은 모두 이 기기 브라우저 안에만 저장되며 서버로 보내지 않습니다. 브라우저의 ‘방문 기록·사이트 데이터 삭제’를 하면 함께 지워질 수 있습니다.<br>
+      권장: 컴퓨터는 Chrome·Edge 최신 버전, 휴대폰은 아이폰 Safari(iOS 17 이상)·안드로이드 Chrome.</p>
+    <p><button class="ibtn" id="helpStart">처음 사용 안내 다시 보기</button></p>
+  </div>
+</dialog>
+<dialog id="startDlg" aria-labelledby="startTitle">
+  <h4 id="startTitle">Yoga Flow Player에 오신 것을 환영해요 🧘</h4>
+  <ol class="steps">
+    <li><span>1</span><div><b>＋ 곡 추가</b>로 수업 음악(MP3)을 넣으세요. ☰를 끌어 순서를 바꿉니다.</div></li>
+    <li><span>2</span><div><b>▶</b>로 시작하고, <b>다음 곡으로 전환</b>을 누르면 두 곡이 겹치며 부드럽게 넘어갑니다. 자동 전환도 됩니다.</div></li>
+    <li><span>3</span><div>매트 위에서는 <b>수업 모드</b> — 버튼이 커지고 화면이 꺼지지 않습니다.</div></li>
+    <li><span>4</span><div>아래에 <b>싱잉볼·사바아사나 타이머·배경 소리·끄기 예약·모닝콜</b>이 있습니다.</div></li>
+  </ol>
+  <p class="muted" style="margin:14px 0 0;line-height:1.6">휴대폰은 ‘홈 화면에 추가’하면 앱처럼 쓸 수 있어요. 자세한 내용은 언제든 위의 <b>? 설명서</b>에서 볼 수 있습니다.</p>
+  <div class="btns"><button class="ibtn" id="startHelp">자세한 설명서</button><button class="ibtn on" id="startOk">시작하기</button></div>
 </dialog>
 <div class="night" id="night" hidden>
   <div class="clock" id="nClock">00:00</div>
@@ -489,6 +645,7 @@
 <script>
 (() => {
 const $ = id => document.getElementById(id);
+const APP_VER = "1.3", APP_DATE = "2026-10-11";
 const ICON_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg>';
 const ICON_PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6.5" y="5" width="4" height="14" rx="1.2"/><rect x="13.5" y="5" width="4" height="14" rx="1.2"/></svg>';
 const fmt = s => { s = Math.max(0, s || 0); const m = Math.floor(s / 60), x = Math.floor(s % 60); return `${m}:${String(x).padStart(2, "0")}`; };
@@ -659,6 +816,7 @@ function prev() {
 const MS = "mediaSession" in navigator ? navigator.mediaSession : null;
 function msMeta() {
   if (!MS) return;
+  if (typeof AS !== "undefined" && AS && !$("night").hidden) { msNight(); return; }   // 모닝콜 화면일 땐 그 제목 유지
   const it = items()[cur];
   try {
     MS.metadata = new MediaMetadata({
@@ -711,6 +869,7 @@ function tick() {
     $("xfMark").hidden = !showX;
     if (showX) $("xfMark").style.left = (len - cls.xf) / len * 100 + "%";
   }
+  wfDraw();
   analyser.getByteTimeDomainData(tbuf);
   let sum = 0; for (const b of tbuf) { const x = (b - 128) / 128; sum += x * x; }
   tick.s = (tick.s || 0) * 0.88 + Math.sqrt(sum / tbuf.length) * 0.12;
@@ -725,11 +884,146 @@ function watch() {                                       // 곡 끝나기 전 �
 }
 setInterval(watch, 250);
 decks.forEach(d => d.el.addEventListener("timeupdate", watch));
-$("bar").addEventListener("click", e => {
+function seekTo(t) {                                      // 곡 안에서 위치 이동 (재생 중이면 아주 짧게 줄였다 키워 '툭' 소리 없게)
   const d = A(); if (!d.item || !d.el.duration) return;
-  const r = $("bar").getBoundingClientRect(), st = d.item.start || 0;
-  d.el.currentTime = st + (e.clientX - r.left) / r.width * (d.el.duration - st);
-});
+  t = Math.max(0, Math.min(d.el.duration - 0.2, t));
+  if (playing && !xfading && !busy) {
+    const v = d.item.vol ?? 1; ramp(d.g.gain, 0, 0.12, "out");
+    clearTimeout(seekTo.t); seekTo.t = setTimeout(() => { d.el.currentTime = t; ramp(d.g.gain, v, 0.35, "in"); }, 130);
+  } else d.el.currentTime = t;
+  wfKey = "";
+}
+function seekFromX(el, clientX) {
+  const d = A(); if (!d.item || !d.el.duration) return;
+  const r = el.getBoundingClientRect(), st = d.item.start || 0;
+  seekTo(st + Math.max(0, Math.min(1, (clientX - r.left) / r.width)) * (d.el.duration - st));
+}
+$("bar").addEventListener("click", e => seekFromX($("bar"), e.clientX));
+$("wave").addEventListener("click", e => seekFromX($("wave"), e.clientX));
+
+// ================= 파형 (곡마다 한 번 분석 → 수업 목록에 작은 글자로 저장, 다음부터는 바로 그림) =================
+const WF_N = 480, WF_A = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";   // 막대 480개 · 0~61 단계
+const wfMem = new Map(), wfFail = new Set();
+let wfQ = Promise.resolve(), wfKey = "";
+const wfOf = it => it && (it.wf || wfMem.get(it.fid));
+const decodeP = (c, b) => new Promise((res, rej) => { const p = c.decodeAudioData(b, res, rej); if (p && p.then) p.then(res, rej); });
+function wfEnsure() {                                     // 지금 곡의 파형이 없으면 잠시 뒤 조용히 분석 (전환 중·화면 꺼짐엔 미룸)
+  const it = items()[cur];
+  if (!it || wfOf(it) || wfFail.has(it.fid) || wfEnsure.busy === it.fid) return;
+  clearTimeout(wfEnsure.t);
+  wfEnsure.t = setTimeout(() => {
+    if (document.hidden || xfading || busy) { wfEnsure.t = setTimeout(wfEnsure, 3000); return; }
+    const fid = it.fid; wfEnsure.busy = fid;
+    wfQ = wfQ.then(() => wfMake(fid)).catch(() => wfFail.add(fid)).then(() => { wfEnsure.busy = null; wfKey = ""; });
+  }, 1500);
+}
+async function wfMake(fid) {
+  const f = await getFile(fid);
+  if (!f || !f.blob || f.blob.size > 120e6) { wfFail.add(fid); return; }
+  const buf = await f.blob.arrayBuffer();
+  const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  let ab = null;
+  for (const sr of [8000, 22050]) {                       // 낮은 표본율로 풀면 휴대폰 메모리를 적게 씀
+    try { ab = await decodeP(new OAC(1, 1, sr), buf.slice(0)); break; } catch (e) {}
+  }
+  if (!ab) { if (f.blob.size > 30e6) { wfFail.add(fid); return; } ab = await decodeP(ctx, buf); }
+  const chs = Math.min(2, ab.numberOfChannels), n = ab.length, per = n / WF_N, pk = new Float32Array(WF_N);
+  const data = Array.from({ length: chs }, (_, c) => ab.getChannelData(c));
+  for (let b = 0; b < WF_N; b++) {
+    const s0 = Math.floor(b * per), s1 = Math.min(n, Math.floor((b + 1) * per)), step = Math.max(1, Math.floor((s1 - s0) / 1500));
+    let m = 0;
+    for (const d of data) for (let i = s0; i < s1; i += step) { const v = d[i] < 0 ? -d[i] : d[i]; if (v > m) m = v; }
+    pk[b] = m;
+  }
+  const top = Math.max(1e-4, ...pk);
+  const str = Array.from(pk, v => WF_A[Math.round(Math.pow(v / top, 0.8) * 61)]).join("");
+  wfMem.set(fid, str);
+  for (const c of classes) { let ch = false; for (const it of c.items) if (it.fid === fid && it.wf !== str) { it.wf = str; ch = true; } if (ch) putClass(c); }
+}
+const wv = $("wave"), wctx = wv.getContext("2d");
+const CUE_N = 4, CUE_C = ["#67e8f9", "#c4b5fd", "#f9a8d4", "#bef264"];   // 주황은 자동 전환 표시라 피함
+function wfDraw() {                                       // tick 에서 부름 — 바뀐 게 있을 때만 다시 그림
+  const d = A(), it = d.item, pk = wfOf(it);
+  if (!pk || !d.el.duration) { if (!wv.hidden) wv.hidden = true; wfKey = ""; return; }
+  if (wv.hidden) { wv.hidden = false; wfKey = ""; }
+  const dpr = Math.min(2, devicePixelRatio || 1), W = Math.round(wv.clientWidth * dpr), H = Math.round(wv.clientHeight * dpr);
+  if (!W || !H) return;
+  const dur = d.el.duration, st = Math.min(it.start || 0, dur - 0.1), len = dur - st;
+  const px = Math.round((d.el.currentTime - st) / len * W);
+  const showX = cls.auto && !it.loop && cur + 1 < items().length && len > cls.xf + 1;
+  const key = [it.fid, W, H, px, st, (it.cues || []).join(), showX && cls.xf].join("|");
+  if (key === wfKey) return; wfKey = key;
+  if (wv.width !== W) wv.width = W; if (wv.height !== H) wv.height = H;
+  const g = wctx; g.clearRect(0, 0, W, H);
+  const bw = Math.max(1, Math.round(2 * dpr)), gap = Math.max(1, Math.round(dpr)), nb = Math.floor(W / (bw + gap)), mid = H / 2;
+  for (let k = 0; k < nb; k++) {
+    const x = k * (bw + gap), t = st + (x + bw / 2) / W * len;
+    const v = WF_A.indexOf(pk[Math.min(pk.length - 1, Math.floor(t / dur * pk.length))]) / 61;
+    const h = Math.max(dpr, v * (H - 2 * dpr));
+    g.fillStyle = x + bw <= px ? "#5eead4" : x < px ? "#a7f3d0" : "#ffffff30";
+    g.fillRect(x, mid - h / 2, bw, h);
+  }
+  if (showX) {                                            // 자동 전환 시작 지점
+    const x = Math.round((len - cls.xf) / len * W);
+    g.fillStyle = "#fbbf77aa"; for (let y = 0; y < H; y += 6 * dpr) g.fillRect(x, y, Math.max(1, dpr), 3 * dpr);
+  }
+  (it.cues || []).forEach((c, k) => {                     // 큐 표시
+    if (c == null || c < st) return;
+    const x = Math.round((c - st) / len * W);
+    g.fillStyle = CUE_C[k]; g.fillRect(x - dpr, 0, 2 * dpr, H);
+    g.beginPath(); g.arc(x, 4 * dpr, 4 * dpr, 0, 7); g.fill();
+  });
+  g.fillStyle = "#ffffff"; g.fillRect(Math.min(W - 2 * dpr, px), 0, Math.max(1, Math.round(1.5 * dpr)), H);   // 지금 위치
+}
+
+// ================= 큐 버튼 (곡마다 4개: 빈 칸 = 지금 위치 저장, 저장된 칸 = 그 위치로) =================
+const cueBox = $("cues");
+for (let k = 0; k < CUE_N; k++) {
+  const b = document.createElement("button"); b.type = "button"; b.className = "cue"; b.style.setProperty("--c", CUE_C[k]);
+  b.innerHTML = `<i>${k + 1}</i><span></span>`;
+  let hold = null, held = false;
+  b.onpointerdown = () => { held = false; clearTimeout(hold); hold = setTimeout(() => { held = true; cueHit(k, true); try { navigator.vibrate && navigator.vibrate(30); } catch (er) {} }, 650); };
+  const cancel = () => clearTimeout(hold);
+  b.onpointerup = b.onpointerleave = b.onpointercancel = cancel;
+  b.oncontextmenu = e => e.preventDefault();
+  b.onclick = e => { if (held) { held = false; return; } cueHit(k, e.shiftKey); };
+  cueBox.appendChild(b);
+}
+function cueItem() { const d = A(), it = items()[cur]; return it && d.item === it && d.el.duration ? it : null; }
+function cueHit(k, setNew) {
+  const it = cueItem(), d = A();
+  if (!it) { toast("곡을 재생하면 큐를 쓸 수 있습니다"); return; }
+  const c = (it.cues || [])[k];
+  if (setNew || c == null) {
+    it.cues = Array.from({ length: CUE_N }, (_, i) => (it.cues || [])[i] ?? null);
+    it.cues[k] = Math.round(d.el.currentTime * 10) / 10;
+    saveCls(); render(); toast(`큐 ${k + 1} 저장 — ${fmt(it.cues[k] - (it.start || 0))}`);
+    return;
+  }
+  seekTo(c);
+  if (!playing) resumeSoft();
+  toast(`큐 ${k + 1} → ${fmt(c - (it.start || 0))}`);
+}
+function cueClear(it, k) { if (!it.cues) return; it.cues[k] = null; if (it.cues.every(c => c == null)) delete it.cues; saveCls(); render(); }
+function cueShow() {
+  const it = cueItem() || items()[cur];
+  cueBox.hidden = !it;
+  if (!it) return;
+  [...cueBox.children].forEach((b, k) => {
+    const c = (it.cues || [])[k], set = c != null;
+    b.classList.toggle("set", set);
+    b.querySelector("span").textContent = set ? fmt(c - (it.start || 0)) : "＋";
+    b.title = set ? `큐 ${k + 1}: 누르면 ${fmt(c - (it.start || 0))}로 이동 · 길게 누르면(Shift+클릭) 지금 위치로 다시 저장` : `큐 ${k + 1}: 누르면 지금 위치를 저장`;
+    b.setAttribute("aria-label", set ? `큐 ${k + 1}, ${fmt(c - (it.start || 0))}로 이동` : `큐 ${k + 1} 비어 있음, 지금 위치 저장`);
+  });
+  const bar = $("bar"); bar.querySelectorAll(".cm").forEach(x => x.remove());   // 진행 막대에도 표시
+  const d = A();
+  if (d.item === it && d.el.duration) {
+    const st = it.start || 0, len = d.el.duration - st;
+    (it.cues || []).forEach((c, k) => { if (c == null || c < st) return; const m = document.createElement("span"); m.className = "cm"; m.style.left = (c - st) / len * 100 + "%"; m.style.background = CUE_C[k]; bar.appendChild(m); });
+  }
+}
+decks.forEach(d => d.el.addEventListener("loadedmetadata", () => { if (d === A()) cueShow(); }));
 
 // ================= 수업 경과 시간 (음악이 나오는 동안만 셈) =================
 let classSec = 0, lastT = performance.now();
@@ -1240,7 +1534,7 @@ function mixMatch(m) {
 function renderMixes() {
   const box = $("mixes"); box.innerHTML = "";
   const add = (m, mine) => {
-    const b = document.createElement("span"); b.className = "mix" + (mixMatch(m) ? " on" : "");
+    const b = document.createElement("button"); b.type = "button"; b.className = "mix" + (mixMatch(m) ? " on" : ""); b.setAttribute("aria-pressed", mixMatch(m));
     b.innerHTML = `<span>${m.icon || "⭐"}</span><span class="n"></span>`; b.querySelector(".n").textContent = m.name;
     b.title = Object.keys(m.layers).map(id => soundOf(id)?.name).filter(Boolean).join(" + ");
     b.onclick = () => applyMix(m);
@@ -1253,7 +1547,7 @@ function renderMixes() {
   };
   MIXES.forEach(m => add(m, false));
   myMixes.forEach(m => add(m, true));
-  const sv = document.createElement("span"); sv.className = "mix save"; sv.textContent = "＋ 지금 조합 저장";
+  const sv = document.createElement("button"); sv.type = "button"; sv.className = "mix save"; sv.textContent = "＋ 지금 조합 저장";
   sv.onclick = async () => {
     const a = ambCfg(), layers = {};
     for (const [id, l] of Object.entries(a.layers)) if (l.on && soundOf(id)) layers[id] = l.vol ?? soundOf(id).vol;
@@ -1330,6 +1624,8 @@ function renderAmb() {
       if (on && !a.on) a.on = true;                          // 소리를 고르면 전체도 켬
       saveCls(); ambApply();
     };
+    b.setAttribute("role", "button"); b.setAttribute("aria-pressed", !!L.on);
+    b.onkeydown = e => { if ((e.key === "Enter" || e.key === " ") && e.target === b) { e.preventDefault(); e.stopPropagation(); b.click(); } };
     if (S.user) {
       const fx = document.createElement("span"); fx.className = "fx";
       fx.innerHTML = '<button class="chg" title="다른 파일로 바꾸기">⇄</button><button class="del" title="이 파일 지우기">✕</button>';
@@ -1346,7 +1642,8 @@ function renderAmb() {
   const add = document.createElement("div");
   add.className = "snd add"; add.tabIndex = 0;
   add.innerHTML = '<span class="t"><i>＋</i><b>내 소리 추가</b></span><small>mp3·wav 등, 여러 개 가능</small>';
-  add.onclick = () => ambPick(null);
+  add.onclick = () => ambPick(null); add.setAttribute("role", "button");
+  add.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); add.click(); } };
   grid.appendChild(add);
 }
 let ambReplace = null;                                    // 바꿀 파일 id (없으면 새로 추가)
@@ -1623,7 +1920,7 @@ function alTick() {                                     // 1초마다 (화면이
   const now = new Date();
   if (!$("night").hidden) $("nClock").textContent = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
   if (!AS) return;
-  const t = Date.now(), riseAt = AS.at - AL.ramp * 60000;
+  const t = Date.now(), riseAt = AS.at - (AS.ramp || AL.ramp) * 60000;
   if (AS.phase === "sleep" && t >= AS.sleepEnd) {         // 잠들기 소리 → 밤새 아주 작게
     AS.phase = "keep"; asSave(); ramp(ambG.gain, AL.keep * ambCfg().vol, 60);
   }
@@ -1664,8 +1961,7 @@ $("nUp").onclick = () => {
 };
 $("nSnooze").onclick = () => {                           // 5분 더: 조용히 했다가 1분 동안 다시 커짐
   wakeStop(); $("night").classList.remove("ring");
-  AS = { ...AS, at: Date.now() + 5 * 60000, phase: "keep" }; asSave();
-  const old = AL.ramp; AL.ramp = 1; setTimeout(() => (AL.ramp = old), 6 * 60000);
+  AS = { ...AS, at: Date.now() + 5 * 60000, phase: "keep", ramp: 1 }; asSave();      // 다시 깨울 땐 1분 동안만 커짐 (저장된 설정은 그대로)
   toast("5분 뒤 다시 깨울게요");
 };
 function alCheckMissed() {                               // 앱이 밤사이 꺼졌던 경우 알려 줌
@@ -1716,9 +2012,16 @@ function render() {
       <div class="edit">
         <label>볼륨 <input type="range" class="ev" min="0" max="1.5" step="0.01"><span class="evl"></span></label>
         <label>시작 위치 <input type="number" class="es" min="0" step="1"> 초부터</label>
+        <span class="ecues"></span>
       </div>`;
     li.querySelector("b").textContent = it.name;
-    li.querySelector("small").textContent = [fmt(it.dur - (it.start || 0)), it.vol !== 1 ? `볼륨 ${Math.round(it.vol * 100)}%` : "", it.start ? `${it.start}초부터` : "", it.loop ? "반복" : ""].filter(Boolean).join(" · ");
+    const ncue = (it.cues || []).filter(c => c != null).length;
+    li.querySelector("small").textContent = [fmt(it.dur - (it.start || 0)), it.vol !== 1 ? `볼륨 ${Math.round(it.vol * 100)}%` : "", it.start ? `${it.start}초부터` : "", it.loop ? "반복" : "", ncue ? `큐 ${ncue}개` : ""].filter(Boolean).join(" · ");
+    if (openItem === it) {                                 // 곡 설정: 저장된 큐 지우기
+      const ec = li.querySelector(".ecues");
+      if (ncue) { ec.append("큐 지우기"); it.cues.forEach((c, k) => { if (c == null) return; const b = document.createElement("button"); b.type = "button"; b.textContent = `${k + 1}  ${fmt(c - (it.start || 0))} ✕`; b.style.borderColor = CUE_C[k]; b.title = `큐 ${k + 1} 지우기`; b.onclick = () => cueClear(it, k); ec.appendChild(b); }); }
+      else ec.textContent = "큐 없음 (재생 중 진행 막대 아래 ＋ 로 저장)";
+    }
     li.onclick = e => { if (e.target.closest(".tools, .edit")) return; playing ? crossTo(i) : startAt(i, 1.5); };
     li.querySelector(".lp").onclick = () => {
       it.loop = !it.loop; saveCls();
@@ -1754,17 +2057,18 @@ function render() {
     };
     ul.appendChild(li);
   });
-  if (!its.length) ul.innerHTML = '<li style="cursor:default;grid-template-columns:1fr;color:var(--dim)">아직 곡이 없습니다. 아래에 MP3를 끌어다 놓으세요.</li>';
+  if (!its.length) ul.innerHTML = '<li style="cursor:default;grid-template-columns:1fr;color:var(--dim)">아직 곡이 없습니다. ＋ 곡 추가를 누르거나 MP3를 끌어다 놓으세요.</li>';
   const tot = its.reduce((s, it) => s + (it.dur - (it.start || 0)), 0) - Math.max(0, its.length - 1) * (cls.auto ? cls.xf : 0);
   $("total").textContent = its.length ? `${its.length}곡 · 약 ${Math.max(1, Math.round(tot / 60))}분` : "";
   const it = its[cur];
-  $("title").textContent = it ? it.name : (its.length ? "▶ 를 누르면 1번 곡부터 시작합니다" : "곡을 추가해 수업을 준비하세요");
+  $("title").textContent = it ? it.name : (its.length ? "▶ 를 눌러 1번 곡부터 시작" : "곡을 추가해 수업을 준비하세요");
   const nx = its[cur + 1];
-  $("subline").textContent = it ? (nx ? `다음: ${nx.name}` : "마지막 곡") : (its.length ? `${cls.name} · ${its.length}곡` : "오른쪽에 MP3를 끌어다 놓으면 순서대로 재생됩니다");
+  $("subline").textContent = it ? (nx ? `다음: ${nx.name}` : "마지막 곡") : (its.length ? `${cls.name} · ${its.length}곡` : "＋ 곡 추가로 MP3를 넣으면 순서대로 재생됩니다");
   if (!it) { $("fill").style.width = "0"; $("tCur").textContent = "0:00"; $("tLeft").textContent = "-0:00"; $("xfMark").hidden = true; }
-  msMeta();
+  msMeta(); cueShow(); wfEnsure(); wfKey = "";
 }
 $("addBtn").onclick = $("drop").onclick = () => $("fileIn").click();
+$("drop").onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); $("fileIn").click(); } };
 $("fileIn").onchange = e => { addFiles(e.target.files); e.target.value = ""; };
 const dz = $("drop");
 const hasFiles = e => [...(e.dataTransfer?.types || [])].includes("Files");
@@ -1843,8 +2147,19 @@ function classMode(on) {
 }
 $("modeBtn").onclick = () => classMode(!document.body.classList.contains("class-mode"));
 document.addEventListener("fullscreenchange", () => { if (!document.fullscreenElement && document.body.classList.contains("class-mode")) classMode(false); });
-$("helpBtn").onclick = () => $("helpDlg").showModal();
-$("helpOk").onclick = () => $("helpDlg").close();
+function helpOpen(sec) {
+  const d = $("helpDlg"); if (!d.open) d.showModal();
+  const body = d.querySelector(".hd-body");
+  if (sec) $(sec).scrollIntoView({ block: "start" }); else body.scrollTop = 0;
+}
+$("helpBtn").onclick = $("footHelp").onclick = () => helpOpen();
+$("helpX").onclick = () => $("helpDlg").close();
+$("helpDlg").querySelectorAll(".hd-nav button").forEach(b => b.onclick = () => $(b.dataset.go).scrollIntoView({ block: "start", behavior: "smooth" }));
+$("helpDlg").addEventListener("click", e => { if (e.target === $("helpDlg")) $("helpDlg").close(); });   // 바깥을 누르면 닫힘
+$("helpStart").onclick = () => { $("helpDlg").close(); $("startDlg").showModal(); };
+$("startOk").onclick = () => $("startDlg").close();
+$("startHelp").onclick = () => { $("startDlg").close(); helpOpen(); };
+$("verLine").textContent = `Yoga Flow Player v${APP_VER}`; $("verHelp").textContent = `v${APP_VER} (${APP_DATE})`;
 let lock = null;
 async function wake(on) {                                // 재생 중엔 화면이 꺼지지 않게
   try { if (on && !lock && navigator.wakeLock) lock = await navigator.wakeLock.request("screen"); else if (!on && lock) { await lock.release(); lock = null; } } catch (e) { lock = null; }
@@ -1853,11 +2168,17 @@ document.addEventListener("visibilitychange", () => {
   if (document.visibilityState !== "visible") return;
   revive();
   if (playing) { lock = null; wake(true); }
+  wfEnsure();
 });
 
 addEventListener("keydown", e => {
-  if (e.target.matches("input[type=text], input[type=number], select") || e.ctrlKey || e.altKey || e.metaKey || document.querySelector("dialog[open]")) return;
+  const tg = e.target instanceof Element ? e.target : document.body;
+  if (tg.matches("input[type=text], input[type=number], input[type=time], textarea, select") || e.ctrlKey || e.altKey || e.metaKey || document.querySelector("dialog[open]")) return;
   const k = e.key.toLowerCase();
+  if (tg.matches("input[type=range]") && k.startsWith("arrow")) return;      // 막대를 잡고 있을 땐 화살표가 그 막대를 움직임
+  const dg = /^Digit([1-4])$/.exec(e.code);
+  if (dg && $("night").hidden) { e.preventDefault(); cueHit(+dg[1] - 1, e.shiftKey); return; }
+  if (!$("night").hidden) return;                          // 모닝콜 화면에서는 단축키를 쓰지 않음
   if (k === " ") { e.preventDefault(); togglePlay(); }
   else if (k === "n" || k === "arrowright") { e.preventDefault(); next(); }
   else if (k === "arrowleft") { e.preventDefault(); prev(); }
@@ -1881,7 +2202,7 @@ addEventListener("keydown", e => {
   await selectClass(ls.get("lastClass", classes[0].id));
   if (!db) toast("이 브라우저에선 곡이 저장되지 않습니다 (창을 닫으면 사라짐)");
   alUI(); alCheckMissed();
-  if (!ls.get("seenHelp", false)) { ls.set("seenHelp", true); $("helpDlg").showModal(); }
+  if (!ls.get("seenStart", false)) { ls.set("seenStart", true); ls.set("seenHelp", true); $("startDlg").showModal(); }   // 처음 한 번만
   tick();
 })();
 })();

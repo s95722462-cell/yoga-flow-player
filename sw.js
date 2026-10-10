@@ -1,6 +1,6 @@
 // Yoga Flow Player — 오프라인 실행용 서비스 워커
 // 페이지는 새 버전을 먼저 받아 보고(network-first), 인터넷이 없으면 저장본으로 엽니다.
-const CACHE = "yfp-v1";
+const CACHE = "yfp-v2";
 const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-maskable-512.png"];
 
 self.addEventListener("install", e => {
