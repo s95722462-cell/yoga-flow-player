@@ -425,7 +425,7 @@
       </div>
       <div style="display:flex;flex-direction:column;gap:10px">
         <div class="al-row"><b>잠들기 소리</b><span id="alSleepName" style="color:var(--text)">배경 소리에서 고른 소리</span></div>
-        <div class="al-row"><b>잠들기 시간</b><select id="alSleepMin"><option value="15">15분 뒤 작게</option><option value="30" selected>30분 뒤 작게</option><option value="60">60분 뒤 작게</option></select></div>
+        <div class="al-row"><b>잠들기 시간</b><select id="alSleepMin"><option value="5">5분 뒤 작게</option><option value="10">10분 뒤 작게</option><option value="15">15분 뒤 작게</option><option value="30" selected>30분 뒤 작게</option><option value="60">60분 뒤 작게</option></select></div>
         <div class="al-row"><b>밤새 크기</b><select id="alKeep"><option value="0.03">거의 안 들리게</option><option value="0.08" selected>아주 작게</option><option value="0.18">은은하게</option></select></div>
       </div>
     </div>
@@ -1405,6 +1405,11 @@ setInterval(() => {
   const left = (sleepEnd - performance.now()) / 1000;
   if (left > 0) { $("sleepLeft").textContent = (left >= 3600 ? `${Math.floor(left / 3600)}시간 ${Math.floor(left % 3600 / 60)}분` : fmt2(left)) + " 남음"; return; }
   sleepEnd = 0; $("sleepSel").value = "0"; $("sleepLeft").textContent = ""; $("sleepCustom").hidden = $("sleepAtBox").hidden = true;
+  if (AS) {                                               // 모닝콜이 켜져 있으면: 배경 소리를 끄지 않고 '밤새 아주 작게'로 넘김 (아침에 울리도록 앱을 깨워 둠)
+    if (playing) fadeStop(30);
+    if (AS.phase === "sleep") { AS.sleepEnd = Date.now(); asSave(); }
+    toast("끄기 예약 시간 — 모닝콜이 켜져 있어 소리를 아주 작게 줄이고 아침까지 기다립니다"); return;
+  }
   fadeStop(30);
   ramp(ambG.gain, 0, 30, "out");
   setTimeout(() => { const a = ambCfg(); a.on = false; saveCls(); ambApply(); }, 30500);
